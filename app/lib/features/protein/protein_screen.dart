@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 import '../../core/widgets/glow_card.dart';
@@ -311,6 +312,7 @@ class _ProteinScreenState extends ConsumerState<ProteinScreen> {
           const SizedBox(height: 8),
           GlowCard(
             glowColor: kNeonAmber,
+            onTap: () => launchUrl(Uri.parse(p.alphaFoldUrl!)),
             child: Row(
               children: [
                 const Icon(Icons.view_in_ar, color: kNeonAmber, size: 24),
@@ -320,10 +322,13 @@ class _ProteinScreenState extends ConsumerState<ProteinScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('AlphaFold Predicted Structure', style: tsBody().copyWith(fontWeight: FontWeight.w600)),
+                      Text('Click to open interactive 3D model', style: tsBody().copyWith(fontSize: 11, color: kNeonAmber)),
+                      const SizedBox(height: 4),
                       Text(p.alphaFoldUrl!, style: tsMono().copyWith(fontSize: 10, color: kTextMuted)),
                     ],
                   ),
                 ),
+                const Icon(Icons.open_in_new, color: kNeonAmber, size: 18),
               ],
             ),
           ),
