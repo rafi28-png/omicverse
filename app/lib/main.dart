@@ -47,12 +47,31 @@ void main() {
     await Hive.openBox<dynamic>('preferences');
 
     // Step 5: Initialize Supabase only if config is present
+    bool supabaseInitialized = false;
     if (config.isSupabaseConfigured) {
-      await Supabase.initialize(
-        url: config.supabaseUrl,
-        publishableKey: config.supabaseAnonKey,
-      );
+      try {
+        await Supabase.initialize(
+          url: config.supabaseUrl,
+          publishableKey: config.supabaseAnonKey,
+        );
+        supabaseInitialized = true;
+      } catch (e) {
+        debugPrint('Supabase initialization failed: $e');
+      }
     }
+
+    final finalConfig = supabaseInitialized
+        ? config
+        : AppConfig(
+            supabaseUrl: '',
+            supabaseAnonKey: '',
+            appName: config.appName,
+            appVersion: config.appVersion,
+            maxVcfVariants: config.maxVcfVariants,
+            annotationBatchSize: config.annotationBatchSize,
+            cacheTtlHours: config.cacheTtlHours,
+            debugMode: config.debugMode,
+          );
 
     // Step 6: App version
     final info = await PackageInfo.fromPlatform();
@@ -67,9 +86,9 @@ void main() {
     runApp(ProviderScope(
       overrides: [
         appVersionProvider.overrideWithValue(info.version),
-        appConfigProvider.overrideWithValue(config),
+        appConfigProvider.overrideWithValue(finalConfig),
       ],
-      child: OmicVerseApp(supabaseConfigured: config.isSupabaseConfigured),
+      child: OmicVerseApp(supabaseConfigured: supabaseInitialized),
     ));
   }, (error, stack) {
     debugPrint('Uncaught error: $error\n$stack');
