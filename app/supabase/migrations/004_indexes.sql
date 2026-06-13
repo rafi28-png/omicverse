@@ -1,0 +1,18 @@
+CREATE INDEX idx_projects_user      ON public.projects(user_id);
+CREATE INDEX idx_projects_created   ON public.projects(created_at DESC);
+CREATE INDEX idx_projects_module    ON public.projects(module);
+CREATE INDEX idx_bookmarks_user     ON public.bookmarks(user_id);
+CREATE INDEX idx_bookmarks_entity   ON public.bookmarks(entity_type, entity_id);
+CREATE INDEX idx_variants_user      ON public.variant_analyses(user_id);
+CREATE INDEX idx_variants_created   ON public.variant_analyses(created_at DESC);
+CREATE INDEX idx_expression_user    ON public.expression_analyses(user_id);
+CREATE INDEX idx_prs_user           ON public.prs_results(user_id);
+CREATE INDEX idx_prs_trait          ON public.prs_results(trait_name);
+CREATE INDEX idx_methylation_user   ON public.methylation_results(user_id);
+CREATE INDEX idx_crispr_user        ON public.crispr_designs(user_id);
+CREATE INDEX idx_crispr_gene        ON public.crispr_designs(gene);
+CREATE INDEX idx_collab_code        ON public.collaboration_sessions(session_code);
+CREATE INDEX idx_collab_creator     ON public.collaboration_sessions(creator_id);
+CREATE INDEX idx_participants_sess  ON public.session_participants(session_id);
+CREATE INDEX idx_participants_user  ON public.session_participants(user_id);
+CREATE INDEX idx_annotations_sess   ON public.session_annotations(session_id);

@@ -1,0 +1,24 @@
+{
+  "gene": "TP53",
+  "ensembl_id": "ENSG00000141510",
+  "chromosome": "17",
+  "start": 7668402,
+  "end": 7687550,
+  "strand": -1,
+  "biotype": "protein_coding",
+  "description": "Tumor protein p53",
+  "transcripts": [
+    {"id": "ENST00000269305", "name": "TP53-201", "biotype": "protein_coding", "length": 2629, "exon_count": 11, "is_canonical": true},
+    {"id": "ENST00000413465", "name": "TP53-202", "biotype": "protein_coding", "length": 2367, "exon_count": 10, "is_canonical": false},
+    {"id": "ENST00000359597", "name": "TP53-203", "biotype": "protein_coding", "length": 1182, "exon_count": 8, "is_canonical": false}
+  ],
+  "uniprot_id": "P04637",
+  "protein_length": 393,
+  "domains": [
+    {"name": "Transactivation domain", "start": 1, "end": 61},
+    {"name": "Proline-rich region", "start": 64, "end": 92},
+    {"name": "DNA-binding domain", "start": 102, "end": 292},
+    {"name": "Tetramerization domain", "start": 323, "end": 356},
+    {"name": "Regulatory domain", "start": 364, "end": 393}
+  ]
+}

@@ -1,0 +1,10 @@
+const kD50  = Duration(milliseconds: 50);
+const kD100 = Duration(milliseconds: 100);
+const kD200 = Duration(milliseconds: 200);
+const kD300 = Duration(milliseconds: 300);
+const kD400 = Duration(milliseconds: 400);
+const kD500 = Duration(milliseconds: 500);
+const kD700 = Duration(milliseconds: 700);
+const kD900 = Duration(milliseconds: 900);
+const kD1200 = Duration(milliseconds: 1200);
+const kD2000 = Duration(milliseconds: 2000);

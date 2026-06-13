@@ -1,0 +1,23 @@
+{
+  "uniprot_id": "P04637",
+  "gene_name": "TP53",
+  "protein_name": "Cellular tumor antigen p53",
+  "organism": "Homo sapiens",
+  "length": 393,
+  "mass_da": 43653,
+  "function": "Acts as a tumor suppressor. Induces growth arrest or apoptosis depending on the physiological circumstances and cell type.",
+  "subcellular_location": ["Nucleus", "Cytoplasm", "Endoplasmic reticulum", "Mitochondrion"],
+  "pdb_structures": [
+    {"pdb_id": "1TUP", "method": "X-ray", "resolution": 2.2, "chains": "A,B,C", "region": "DNA-binding domain"},
+    {"pdb_id": "2XWR", "method": "X-ray", "resolution": 1.9, "chains": "A", "region": "Tetramerization domain"},
+    {"pdb_id": "6GGA", "method": "Cryo-EM", "resolution": 3.7, "chains": "A,B,C,D", "region": "Full complex"}
+  ],
+  "interactions": [
+    {"partner": "MDM2", "score": 0.999, "type": "physical"},
+    {"partner": "MDM4", "score": 0.998, "type": "physical"},
+    {"partner": "EP300", "score": 0.997, "type": "physical"},
+    {"partner": "BRCA1", "score": 0.991, "type": "physical"},
+    {"partner": "ATM", "score": 0.988, "type": "functional"}
+  ],
+  "alphafold_plddt_avg": 72.5
+}

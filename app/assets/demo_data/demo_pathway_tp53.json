@@ -1,0 +1,12 @@
+{
+  "query_gene": "TP53",
+  "organism": "Homo sapiens",
+  "pathways": [
+    {"id": "R-HSA-3700989", "name": "Transcriptional Regulation by TP53", "source": "Reactome", "gene_count": 367, "p_value": 1.2e-45},
+    {"id": "hsa04115", "name": "p53 signaling pathway", "source": "KEGG", "gene_count": 72, "p_value": 3.4e-28},
+    {"id": "R-HSA-6791312", "name": "TP53 Regulates Transcription of Cell Cycle Genes", "source": "Reactome", "gene_count": 56, "p_value": 8.9e-22},
+    {"id": "hsa04210", "name": "Apoptosis", "source": "KEGG", "gene_count": 136, "p_value": 4.1e-15},
+    {"id": "R-HSA-5633007", "name": "Regulation of TP53 Activity", "source": "Reactome", "gene_count": 145, "p_value": 2.7e-18},
+    {"id": "hsa05200", "name": "Pathways in cancer", "source": "KEGG", "gene_count": 530, "p_value": 5.6e-12}
+  ]
+}

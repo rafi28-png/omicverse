@@ -1,0 +1,128 @@
+import '../../../core/services/api_service.dart';
+import '../../../core/services/api_constants.dart';
+import '../../../core/services/rate_limiter.dart';
+import '../../../core/services/cache_service.dart';
+
+class GeneInfo {
+  final String ensemblId;
+  final String symbol;
+  final String description;
+  final String chromosome;
+  final int start;
+  final int end;
+  final int strand;
+  final String biotype;
+  final String assembly;
+
+  const GeneInfo({
+    required this.ensemblId,
+    required this.symbol,
+    required this.description,
+    required this.chromosome,
+    required this.start,
+    required this.end,
+    required this.strand,
+    required this.biotype,
+    required this.assembly,
+  });
+
+  String get location => 'chr$chromosome:$start-$end';
+  String get strandLabel => strand == 1 ? '+' : '-';
+  int get length => (end - start).abs();
+
+  /// Demo data for offline mode
+  static List<GeneInfo> demoGenes() => const [
+    GeneInfo(ensemblId: 'ENSG00000141510', symbol: 'TP53', description: 'Tumor protein p53',
+      chromosome: '17', start: 7661779, end: 7687550, strand: -1, biotype: 'protein_coding', assembly: 'GRCh38'),
+    GeneInfo(ensemblId: 'ENSG00000012048', symbol: 'BRCA1', description: 'BRCA1 DNA repair associated',
+      chromosome: '17', start: 43044295, end: 43170245, strand: -1, biotype: 'protein_coding', assembly: 'GRCh38'),
+    GeneInfo(ensemblId: 'ENSG00000146648', symbol: 'EGFR', description: 'Epidermal growth factor receptor',
+      chromosome: '7', start: 55019017, end: 55211628, strand: 1, biotype: 'protein_coding', assembly: 'GRCh38'),
+    GeneInfo(ensemblId: 'ENSG00000157764', symbol: 'BRAF', description: 'B-Raf proto-oncogene',
+      chromosome: '7', start: 140719327, end: 140924929, strand: -1, biotype: 'protein_coding', assembly: 'GRCh38'),
+    GeneInfo(ensemblId: 'ENSG00000133703', symbol: 'KRAS', description: 'KRAS proto-oncogene',
+      chromosome: '12', start: 25205246, end: 25250929, strand: -1, biotype: 'protein_coding', assembly: 'GRCh38'),
+  ];
+}
+
+class GenomeService {
+  /// Search for a gene by symbol using Ensembl REST API
+  static Future<List<GeneInfo>> searchGene(String query) async {
+    if (query.trim().isEmpty) return [];
+
+    final cacheKey = 'gene_search:${query.toLowerCase()}';
+    final cached = await CacheService.get('ensembl', cacheKey);
+
+    if (cached != null) {
+      // Return demo data as placeholder when cached says 'demo'
+      return GeneInfo.demoGenes().where((g) =>
+        g.symbol.toLowerCase().contains(query.toLowerCase())
+      ).toList();
+    }
+
+    await RateLimiter.throttle('ensembl');
+
+    try {
+      final resp = await ApiService.get<List<dynamic>>(
+        '${ApiConstants.ensembl}/xrefs/symbol/homo_sapiens/$query',
+        params: {'content-type': 'application/json'},
+      );
+
+      final results = <GeneInfo>[];
+      for (final item in resp) {
+        final id = item['id'] as String?;
+        if (id == null || !id.startsWith('ENSG')) continue;
+
+        // Fetch full gene info
+        final gene = await _fetchGeneById(id);
+        if (gene != null) results.add(gene);
+      }
+
+      return results;
+    } catch (_) {
+      // Fallback to demo data
+      return GeneInfo.demoGenes().where((g) =>
+        g.symbol.toLowerCase().contains(query.toLowerCase())
+      ).toList();
+    }
+  }
+
+  /// Fetch gene info by Ensembl ID
+  static Future<GeneInfo?> _fetchGeneById(String ensemblId) async {
+    try {
+      await RateLimiter.throttle('ensembl');
+      final resp = await ApiService.get<Map<String, dynamic>>(
+        '${ApiConstants.ensembl}/lookup/id/$ensemblId',
+        params: {'content-type': 'application/json', 'expand': '0'},
+      );
+
+      return GeneInfo(
+        ensemblId: resp['id'] as String? ?? ensemblId,
+        symbol: resp['display_name'] as String? ?? '',
+        description: resp['description'] as String? ?? '',
+        chromosome: resp['seq_region_name'] as String? ?? '',
+        start: resp['start'] as int? ?? 0,
+        end: resp['end'] as int? ?? 0,
+        strand: resp['strand'] as int? ?? 1,
+        biotype: resp['biotype'] as String? ?? '',
+        assembly: resp['assembly_name'] as String? ?? 'GRCh38',
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Fetch genomic sequence for a region
+  static Future<String?> fetchSequence(String chromosome, int start, int end) async {
+    try {
+      await RateLimiter.throttle('ensembl');
+      final resp = await ApiService.get<Map<String, dynamic>>(
+        '${ApiConstants.ensembl}/sequence/region/human/$chromosome:$start..$end:1',
+        params: {'content-type': 'application/json'},
+      );
+      return resp['seq'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+}

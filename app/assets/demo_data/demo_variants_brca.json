@@ -1,0 +1,15 @@
+{
+  "reference_genome": "GRCh38",
+  "gene": "BRCA1",
+  "total_variants": 8,
+  "variants": [
+    {"chr": "17", "pos": 43094464, "ref": "C", "alt": "T", "rsid": "rs80357906", "consequence": "missense_variant", "gene": "BRCA1", "protein_change": "p.Cys61Gly", "clinvar": "Pathogenic", "gnomad_af": 0.00002, "tier": 1},
+    {"chr": "17", "pos": 43091434, "ref": "A", "alt": "G", "rsid": "rs1799966", "consequence": "missense_variant", "gene": "BRCA1", "protein_change": "p.Ser1613Gly", "clinvar": "Benign", "gnomad_af": 0.328, "tier": 1},
+    {"chr": "17", "pos": 43093220, "ref": "G", "alt": "A", "rsid": "rs80357474", "consequence": "stop_gained", "gene": "BRCA1", "protein_change": "p.Gln356Ter", "clinvar": "Pathogenic", "gnomad_af": 0.000008, "tier": 1},
+    {"chr": "17", "pos": 43104121, "ref": "T", "alt": "C", "rsid": "rs16942", "consequence": "missense_variant", "gene": "BRCA1", "protein_change": "p.Lys1183Arg", "clinvar": "Benign", "gnomad_af": 0.361, "tier": 1},
+    {"chr": "17", "pos": 43092919, "ref": "G", "alt": "T", "rsid": "rs786201005", "consequence": "splice_donor_variant", "gene": "BRCA1", "protein_change": null, "clinvar": "Likely_pathogenic", "gnomad_af": 0.0, "tier": 2},
+    {"chr": "17", "pos": 43097274, "ref": "C", "alt": "A", "rsid": null, "consequence": "synonymous_variant", "gene": "BRCA1", "protein_change": "p.Val1378Val", "clinvar": null, "gnomad_af": 0.001, "tier": 4},
+    {"chr": "17", "pos": 43045770, "ref": "AAAG", "alt": "A", "rsid": "rs80357713", "consequence": "frameshift_variant", "gene": "BRCA1", "protein_change": "p.Glu23fs", "clinvar": "Pathogenic", "gnomad_af": 0.000003, "tier": 1},
+    {"chr": "17", "pos": 43082434, "ref": "G", "alt": "C", "rsid": "rs1060915", "consequence": "synonymous_variant", "gene": "BRCA1", "protein_change": "p.Ser694Ser", "clinvar": "Benign", "gnomad_af": 0.33, "tier": 1}
+  ]
+}

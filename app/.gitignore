@@ -1,0 +1,50 @@
+# Environment secrets — NEVER commit
+.env
+*.env
+.env.local
+.env.production
+.env.staging
+
+# Flutter generated
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Dart generated code
+*.g.dart
+*.freezed.dart
+*.gr.dart
+*.mocks.dart
+
+# Android secrets
+android/key.properties
+**/android/*.jks
+**/android/local.properties
+
+# iOS/macOS generated
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+macos/Flutter/GeneratedPluginRegistrant.swift
+
+# IDE
+.idea/
+*.iml
+*.iws
+.vscode/
+*.swp
+*.swo
+
+# Coverage
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# DO NOT IGNORE pubspec.lock — commit it for app projects
+# pubspec.lock  <-- this line must NOT exist. Always commit pubspec.lock.

@@ -1,0 +1,20 @@
+{
+  "experiment": "PBMC Stimulated vs Control",
+  "total_genes": 12,
+  "upregulated": 5,
+  "downregulated": 4,
+  "genes": [
+    {"gene": "IL6", "log2fc": 4.2, "pvalue": 1.2e-15, "padj": 3.1e-13, "base_mean": 892.3},
+    {"gene": "TNF", "log2fc": 3.8, "pvalue": 4.5e-12, "padj": 8.7e-10, "base_mean": 1204.1},
+    {"gene": "IFNG", "log2fc": 5.1, "pvalue": 2.3e-18, "padj": 1.1e-15, "base_mean": 567.8},
+    {"gene": "IL10", "log2fc": 2.9, "pvalue": 7.8e-8, "padj": 4.5e-6, "base_mean": 345.2},
+    {"gene": "CXCL10", "log2fc": 6.3, "pvalue": 1.0e-22, "padj": 8.2e-20, "base_mean": 2103.5},
+    {"gene": "GAPDH", "log2fc": 0.1, "pvalue": 0.82, "padj": 0.95, "base_mean": 15230.4},
+    {"gene": "ACTB", "log2fc": -0.2, "pvalue": 0.45, "padj": 0.78, "base_mean": 18450.1},
+    {"gene": "CD4", "log2fc": -1.5, "pvalue": 3.2e-4, "padj": 0.012, "base_mean": 987.6},
+    {"gene": "BCL2", "log2fc": -2.8, "pvalue": 5.6e-9, "padj": 5.1e-7, "base_mean": 456.3},
+    {"gene": "FOXP3", "log2fc": -3.2, "pvalue": 1.1e-11, "padj": 1.8e-9, "base_mean": 234.7},
+    {"gene": "MYC", "log2fc": -1.8, "pvalue": 2.1e-5, "padj": 0.0034, "base_mean": 1567.8},
+    {"gene": "TP53", "log2fc": 1.2, "pvalue": 0.0023, "padj": 0.045, "base_mean": 2340.9}
+  ]
+}
