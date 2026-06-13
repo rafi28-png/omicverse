@@ -94,7 +94,7 @@ class SettingsScreen extends ConsumerWidget {
                         trailing: Switch(
                           value: false,
                           onChanged: (_) {},
-                          activeThumbColor: kNeonTeal,
+                          thumbColor: WidgetStatePropertyAll(kNeonTeal),
                         ),
                       ),
                     ],
