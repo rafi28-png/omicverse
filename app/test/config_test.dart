@@ -96,5 +96,25 @@ void main() {
             reason: '$key should not contain "private"');
       }
     });
+
+    test('sanitizes supabaseUrl to strip trailing slash and /rest/v1', () {
+      final config1 = AppConfig.fromEnvironment(
+        dartDefineUrl: 'https://test.supabase.co/rest/v1/',
+        dartDefineKey: 'key',
+      );
+      expect(config1.supabaseUrl, 'https://test.supabase.co');
+
+      final config2 = AppConfig.fromEnvironment(
+        dartDefineUrl: 'https://test.supabase.co/rest/v1',
+        dartDefineKey: 'key',
+      );
+      expect(config2.supabaseUrl, 'https://test.supabase.co');
+
+      final config3 = AppConfig.fromEnvironment(
+        dartDefineUrl: 'https://test.supabase.co/',
+        dartDefineKey: 'key',
+      );
+      expect(config3.supabaseUrl, 'https://test.supabase.co');
+    });
   });
 }

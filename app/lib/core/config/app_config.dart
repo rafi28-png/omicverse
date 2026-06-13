@@ -40,10 +40,20 @@ class AppConfig {
     String? dotenvCacheTtl,
     String? dotenvDebug,
   }) {
+    String rawUrl = dartDefineUrl.isNotEmpty ? dartDefineUrl : (dotenvUrl ?? '');
+    String cleanUrl = rawUrl.trim();
+    if (cleanUrl.endsWith('/')) {
+      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1);
+    }
+    if (cleanUrl.endsWith('/rest/v1')) {
+      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 8);
+    }
+    if (cleanUrl.endsWith('/')) {
+      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1);
+    }
+
     return AppConfig(
-      supabaseUrl: dartDefineUrl.isNotEmpty
-          ? dartDefineUrl
-          : (dotenvUrl ?? ''),
+      supabaseUrl: cleanUrl,
       supabaseAnonKey: dartDefineKey.isNotEmpty
           ? dartDefineKey
           : (dotenvKey ?? ''),
