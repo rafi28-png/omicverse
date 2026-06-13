@@ -89,7 +89,7 @@ class _VariantScreenState extends ConsumerState<VariantScreen> {
         '1\t43350284\t.\tC\tT\t100\tPASS\t.\n';
 
     try {
-      final bytes = utf8.encode(sampleVcf) as Uint8List;
+      final bytes = Uint8List.fromList(utf8.encode(sampleVcf));
       final result = await VcfParser.parse(bytes, 'sample.vcf');
       _parseResult = result;
       _selectedGenome = result.referenceGenome;

@@ -84,7 +84,7 @@ class _ExpressionScreenState extends ConsumerState<ExpressionScreen> {
         'AKT1,-0.12,0.45,0.62,1850.3\n';
 
     try {
-      final bytes = utf8.encode(sampleCsv) as Uint8List;
+      final bytes = Uint8List.fromList(utf8.encode(sampleCsv));
       final result = await ExpressionParser.parse(bytes, 'sample.csv');
       setState(() {
         _result = result;
