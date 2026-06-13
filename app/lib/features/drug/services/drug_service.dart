@@ -90,10 +90,26 @@ class DrugService {
   static Future<List<Drug>> searchByTarget(String gene) async {
     if (gene.trim().isEmpty) return [];
     try {
+      // Step 1: Find the target ChEMBL ID from the gene component synonym component
+      await RateLimiter.throttle('chembl');
+      final targetResp = await ApiService.get<Map<String, dynamic>>(
+        '$_chemblBase/target.json',
+        params: {
+          'target_synonym__icontains': gene,
+          'organism': 'Homo sapiens',
+          'limit': '1',
+        },
+      );
+
+      final targetList = targetResp['targets'] as List<dynamic>? ?? [];
+      if (targetList.isEmpty) return _demoForGene(gene);
+      final targetChemblId = targetList[0]['target_chembl_id'] as String? ?? '';
+
+      // Step 2: Query mechanisms for that target ID
       await RateLimiter.throttle('chembl');
       final resp = await ApiService.get<Map<String, dynamic>>(
         '$_chemblBase/mechanism.json',
-        params: {'target_chembl_id__icontains': gene, 'limit': '15'},
+        params: {'target_chembl_id': targetChemblId, 'limit': '15'},
       );
 
       final results = resp['mechanisms'] as List<dynamic>? ?? [];

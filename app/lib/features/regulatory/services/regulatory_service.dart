@@ -1,5 +1,6 @@
 import '../../../core/services/api_service.dart';
 import '../../../core/services/rate_limiter.dart';
+import '../../genome/services/genome_service.dart';
 
 class RegulatoryElement {
   final String id;
@@ -70,36 +71,84 @@ class TranscriptionFactor {
 }
 
 class RegulatoryService {
-  static const _encodeBase = 'https://www.encodeproject.org';
-
   /// Search regulatory elements near a gene
   static Future<List<RegulatoryElement>> searchByGene(String gene) async {
     if (gene.trim().isEmpty) return [];
 
     try {
+      // Step 1: Find gene coordinates
+      final genes = await GenomeService.searchGene(gene);
+      if (genes.isEmpty) return _demoForGene(gene);
+      final targetGene = genes.first;
+
+      // Step 2: Query SCREEN API by coordinates
       await RateLimiter.throttle('encode');
-      final resp = await ApiService.get<Map<String, dynamic>>(
-        '$_encodeBase/search/',
-        params: {
-          'type': 'Annotation',
-          'searchTerm': gene,
-          'organism.scientific_name': 'Homo sapiens',
-          'format': 'json',
-          'limit': '10',
-        },
+      
+      const query = '''
+      query Search(\$assembly: String!, \$coords: [GenomicRangeInput!]) {
+        cCRESCREENSearch(assembly: \$assembly, coordinates: \$coords) {
+          chrom
+          start
+          len
+          promoter_zscore
+          enhancer_zscore
+          ctcf_zscore
+          info { accession }
+        }
+      }
+      ''';
+
+      final vars = {
+        'assembly': 'grch38',
+        'coords': [
+          {
+            'chromosome': 'chr${targetGene.chromosome}',
+            'start': targetGene.start,
+            'end': targetGene.end,
+          }
+        ]
+      };
+
+      final resp = await ApiService.post(
+        'https://factorbook.api.wenglab.org/graphql',
+        {'query': query, 'variables': vars},
       );
 
       final results = <RegulatoryElement>[];
-      final graph = resp['@graph'] as List<dynamic>? ?? [];
+      final elements = resp['data']?['cCRESCREENSearch'] as List<dynamic>? ?? [];
 
-      for (final item in graph) {
+      for (final item in elements) {
+        final info = item['info'] as Map<String, dynamic>?;
+        final accession = info?['accession'] as String? ?? 'Unknown';
+        final chrom = (item['chrom'] as String? ?? '').replaceAll('chr', '');
+        final start = item['start'] as int? ?? 0;
+        final len = item['len'] as int? ?? 0;
+        final end = start + len;
+
+        // Classify the element based on z-scores or annotation group
+        final promoterZ = (item['promoter_zscore'] as num?)?.toDouble() ?? 0;
+        final enhancerZ = (item['enhancer_zscore'] as num?)?.toDouble() ?? 0;
+        final ctcfZ = (item['ctcf_zscore'] as num?)?.toDouble() ?? 0;
+
+        String type = 'Enhancer-like';
+        double score = enhancerZ;
+        if (promoterZ > enhancerZ && promoterZ > ctcfZ) {
+          type = 'Promoter-like';
+          score = promoterZ;
+        } else if (ctcfZ > promoterZ && ctcfZ > enhancerZ) {
+          type = 'CTCF-bound';
+          score = ctcfZ;
+        }
+
         results.add(RegulatoryElement(
-          id: item['accession'] as String? ?? 'Unknown',
-          type: item['annotation_type'] as String? ?? 'Unknown',
-          chromosome: '',
-          start: 0, end: 0,
+          id: accession,
+          type: type,
+          chromosome: chrom,
+          start: start,
+          end: end,
           nearestGene: gene,
-          source: 'ENCODE',
+          score: score > 0 ? (score / 10).clamp(0.0, 1.0) : 0.0,
+          source: 'ENCODE SCREEN',
         ));
       }
 

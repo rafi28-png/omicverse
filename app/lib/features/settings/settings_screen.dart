@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 import '../../core/widgets/glow_card.dart';
@@ -95,6 +96,7 @@ class SettingsScreen extends ConsumerWidget {
                           value: isDemoMode,
                           onChanged: (val) {
                             ref.read(isDemoModeProvider.notifier).state = val;
+                            Hive.box<dynamic>('preferences').put('isDemoMode', val);
                             if (!val && !AuthService.isLoggedIn) {
                               context.go('/login');
                             }

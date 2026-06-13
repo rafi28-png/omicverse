@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/api_constants.dart';
 import '../../../core/services/rate_limiter.dart';
@@ -30,6 +31,30 @@ class GeneInfo {
   String get strandLabel => strand == 1 ? '+' : '-';
   int get length => (end - start).abs();
 
+  Map<String, dynamic> toJson() => {
+    'ensemblId': ensemblId,
+    'symbol': symbol,
+    'description': description,
+    'chromosome': chromosome,
+    'start': start,
+    'end': end,
+    'strand': strand,
+    'biotype': biotype,
+    'assembly': assembly,
+  };
+
+  factory GeneInfo.fromJson(Map<String, dynamic> j) => GeneInfo(
+    ensemblId: j['ensemblId'] as String,
+    symbol: j['symbol'] as String,
+    description: j['description'] as String,
+    chromosome: j['chromosome'] as String,
+    start: j['start'] as int,
+    end: j['end'] as int,
+    strand: j['strand'] as int,
+    biotype: j['biotype'] as String,
+    assembly: j['assembly'] as String,
+  );
+
   /// Demo data for offline mode
   static List<GeneInfo> demoGenes() => const [
     GeneInfo(ensemblId: 'ENSG00000141510', symbol: 'TP53', description: 'Tumor protein p53',
@@ -54,10 +79,12 @@ class GenomeService {
     final cached = await CacheService.get('ensembl', cacheKey);
 
     if (cached != null) {
-      // Return demo data as placeholder when cached says 'demo'
-      return GeneInfo.demoGenes().where((g) =>
-        g.symbol.toLowerCase().contains(query.toLowerCase())
-      ).toList();
+      try {
+        final list = jsonDecode(cached) as List<dynamic>;
+        return list.map((item) => GeneInfo.fromJson(item as Map<String, dynamic>)).toList();
+      } catch (_) {
+        // Fall back to querying
+      }
     }
 
     await RateLimiter.throttle('ensembl');
@@ -76,6 +103,15 @@ class GenomeService {
         // Fetch full gene info
         final gene = await _fetchGeneById(id);
         if (gene != null) results.add(gene);
+      }
+
+      if (results.isNotEmpty) {
+        await CacheService.set(
+          'ensembl',
+          cacheKey,
+          jsonEncode(results.map((g) => g.toJson()).toList()),
+          ttl: const Duration(hours: 24),
+        );
       }
 
       return results;

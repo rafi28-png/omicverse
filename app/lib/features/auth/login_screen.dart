@@ -59,8 +59,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDemoMode = ref.watch(isDemoModeProvider);
-
     return Scaffold(
       backgroundColor: kBackground,
       body: Center(

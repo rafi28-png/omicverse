@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/rate_limiter.dart';
 import '../../../core/services/cache_service.dart';
@@ -32,6 +33,24 @@ class PopulationFrequency {
     if (alleleFrequency < 0.05) return 'Low frequency';
     return 'Common';
   }
+
+  Map<String, dynamic> toJson() => {
+    'population': population,
+    'abbreviation': abbreviation,
+    'alleleFrequency': alleleFrequency,
+    'alleleCount': alleleCount,
+    'alleleNumber': alleleNumber,
+    'homozygoteCount': homozygoteCount,
+  };
+
+  factory PopulationFrequency.fromJson(Map<String, dynamic> j) => PopulationFrequency(
+    population: j['population'] as String,
+    abbreviation: j['abbreviation'] as String,
+    alleleFrequency: (j['alleleFrequency'] as num).toDouble(),
+    alleleCount: j['alleleCount'] as int? ?? 0,
+    alleleNumber: j['alleleNumber'] as int? ?? 0,
+    homozygoteCount: j['homozygoteCount'] as int? ?? 0,
+  );
 }
 
 class PopulationVariant {
@@ -61,12 +80,40 @@ class PopulationVariant {
 
   String get location => 'chr$chromosome:$position';
 
-  static List<PopulationVariant> demoVariants() => [
+  Map<String, dynamic> toJson() => {
+    'variantId': variantId,
+    'chromosome': chromosome,
+    'position': position,
+    'reference': reference,
+    'alternate': alternate,
+    'rsid': rsid,
+    'globalFrequency': globalFrequency,
+    'populations': populations.map((p) => p.toJson()).toList(),
+    'consequence': consequence,
+    'gene': gene,
+  };
+
+  factory PopulationVariant.fromJson(Map<String, dynamic> j) => PopulationVariant(
+    variantId: j['variantId'] as String,
+    chromosome: j['chromosome'] as String,
+    position: j['position'] as int,
+    reference: j['reference'] as String,
+    alternate: j['alternate'] as String,
+    rsid: j['rsid'] as String? ?? '',
+    globalFrequency: (j['globalFrequency'] as num).toDouble(),
+    populations: (j['populations'] as List<dynamic>)
+        .map((p) => PopulationFrequency.fromJson(p as Map<String, dynamic>))
+        .toList(),
+    consequence: j['consequence'] as String?,
+    gene: j['gene'] as String?,
+  );
+
+  static List<PopulationVariant> demoVariants() => const [
     PopulationVariant(
       variantId: '17-7674220-G-A', chromosome: '17', position: 7674220,
       reference: 'G', alternate: 'A', rsid: 'rs28934578',
       globalFrequency: 0.00002, gene: 'TP53', consequence: 'missense_variant',
-      populations: const [
+      populations: [
         PopulationFrequency(population: 'African/African American', abbreviation: 'AFR', alleleFrequency: 0.00003),
         PopulationFrequency(population: 'European (non-Finnish)', abbreviation: 'NFE', alleleFrequency: 0.00001),
         PopulationFrequency(population: 'East Asian', abbreviation: 'EAS', alleleFrequency: 0.00004),
@@ -80,7 +127,7 @@ class PopulationVariant {
       variantId: '7-55181378-T-G', chromosome: '7', position: 55181378,
       reference: 'T', alternate: 'G', rsid: 'rs121913529',
       globalFrequency: 0.00001, gene: 'EGFR', consequence: 'missense_variant',
-      populations: const [
+      populations: [
         PopulationFrequency(population: 'African/African American', abbreviation: 'AFR', alleleFrequency: 0.00000),
         PopulationFrequency(population: 'European (non-Finnish)', abbreviation: 'NFE', alleleFrequency: 0.00001),
         PopulationFrequency(population: 'East Asian', abbreviation: 'EAS', alleleFrequency: 0.00003),
@@ -92,7 +139,7 @@ class PopulationVariant {
       variantId: '7-140753336-A-T', chromosome: '7', position: 140753336,
       reference: 'A', alternate: 'T', rsid: 'rs113488022',
       globalFrequency: 0.00006, gene: 'BRAF', consequence: 'missense_variant',
-      populations: const [
+      populations: [
         PopulationFrequency(population: 'African/African American', abbreviation: 'AFR', alleleFrequency: 0.00002),
         PopulationFrequency(population: 'European (non-Finnish)', abbreviation: 'NFE', alleleFrequency: 0.00008),
         PopulationFrequency(population: 'East Asian', abbreviation: 'EAS', alleleFrequency: 0.00001),
@@ -116,7 +163,13 @@ class PopulationService {
     final cacheKey = 'pop:$variantId';
 
     final cached = await CacheService.get('gnomad', cacheKey);
-    if (cached != null) return null; // Return demo for cached
+    if (cached != null) {
+      try {
+        return PopulationVariant.fromJson(jsonDecode(cached) as Map<String, dynamic>);
+      } catch (_) {
+        // Fall back to querying
+      }
+    }
 
     try {
       await RateLimiter.throttle('gnomad');
@@ -177,9 +230,7 @@ class PopulationService {
 
       final rsids = data['rsids'] as List<dynamic>? ?? [];
 
-      await CacheService.set('gnomad', cacheKey, 'cached', ttl: const Duration(hours: 24));
-
-      return PopulationVariant(
+      final pv = PopulationVariant(
         variantId: data['variant_id'] as String? ?? variantId,
         chromosome: chromosome,
         position: position,
@@ -191,6 +242,10 @@ class PopulationService {
         consequence: consequence,
         gene: gene,
       );
+
+      await CacheService.set('gnomad', cacheKey, jsonEncode(pv.toJson()), ttl: const Duration(hours: 24));
+
+      return pv;
     } catch (_) {
       return null;
     }

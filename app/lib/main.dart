@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'core/config/app_config.dart';
 import 'core/providers/app_providers.dart';
+import 'core/services/cache_service.dart';
 import 'app.dart';
 
 void main() {
@@ -45,6 +46,7 @@ void main() {
     await Hive.initFlutter();
     await Hive.openBox<dynamic>('cache');
     await Hive.openBox<dynamic>('preferences');
+    await CacheService.init();
 
     // Step 5: Initialize Supabase only if config is present
     bool supabaseInitialized = false;

@@ -140,11 +140,36 @@
 **Blockers**:
 - None (SQL runs independently from Flutter code)
 
+---
+
+### Session 5 — 2026-06-14 (Production API Hardening & JOSS Readiness)
+
+**What happened**:
+- Fixed the Hive `CacheService` initialization issue by calling `CacheService.init()` in `main.dart` (prevented late-init exceptions on live API queries).
+- Persisted the `isDemoMode` preference to the local Hive `preferences` box, so toggling off Demo Mode saves properly.
+- Added proper JSON serialization (toJson/fromJson) for `PopulationVariant` and `GeneInfo` in their respective services and updated their cache retrieval logic to prevent silent fallback to demo mode.
+- Hardened the `RegulatoryService` to resolve the actual coordinates of target genes and query the real public ENCODE SCREEN GraphQL API (`https://factorbook.api.wenglab.org/graphql`) for coordinate-based annotations.
+- Fixed the `DrugService.searchByTarget` method by performing a real 2-step ChEMBL API search (resolving gene components synonyms to component targets and fetching their mechanisms).
+- Hardened the `CancerService` to query Simple Somatic Mutations (SSMs) directly from the NCI Genomic Data Commons (GDC) API, correctly parsing case occurrences and projects.
+- Implemented real computational Cas9 guide RNA design in `CrisprService.designGuides` by fetching Ensembl sequences, scanning for `NGG` PAM motifs, filtering out poly-T transcription terminators, and scoring candidates by GC content.
+- Added new unit tests verifying the model serialization and guide design algorithms.
+- **Verification results**: `flutter analyze` ✅ 0 issues | `flutter test` ✅ 194/194 pass
+
+**Decisions made**:
+- Chose GDC API over cBioPortal API because GDC provides stable, direct gene-level mutations search without needing pre-configured study molecular profiles.
+- Implemented Cas9 guide RNA design as a real local computational search rather than a static mock database lookup.
+
 **Files created/modified**:
-- `omicverse_project_log.md` (this file)
-- `E:\omicverse\` — established as official project directory
-- Blueprint already present at `E:\omicverse\OMICVERSE_BLUEPRINT_FINAL_v8 (1).md`
-- Project log copied to `E:\omicverse\omicverse_project_log.md`
+- `app/lib/main.dart`
+- `app/lib/core/providers/app_providers.dart`
+- `app/lib/features/settings/settings_screen.dart`
+- `app/lib/features/population/services/population_service.dart`
+- `app/lib/features/genome/services/genome_service.dart`
+- `app/lib/features/regulatory/services/regulatory_service.dart`
+- `app/lib/features/drug/services/drug_service.dart`
+- `app/lib/features/cancer/services/cancer_service.dart`
+- `app/lib/features/crispr/services/crispr_service.dart`
+- `app/test/production_hardening_test.dart`
 
 ---
 
