@@ -6,7 +6,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'core/navigation/app_router.dart';
 import 'core/theme/colors.dart';
 
-final routerProvider = Provider<GoRouter>((ref) => createRouter());
+final routerProvider = Provider<GoRouter>((ref) => createRouter(ref));
 
 class OmicVerseApp extends ConsumerStatefulWidget {
   final bool supabaseConfigured;

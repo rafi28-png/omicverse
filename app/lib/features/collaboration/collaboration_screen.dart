@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 import '../../core/widgets/glow_card.dart';
@@ -27,9 +29,13 @@ class _CollaborationScreenState extends ConsumerState<CollaborationScreen> {
   final _codeCtrl = TextEditingController();
   final _annotCtrl = TextEditingController();
   final _nameCtrl = TextEditingController(text: 'Researcher');
+  
+  StreamSubscription<List<Map<String, dynamic>>>? _annotationsSub;
+  final Map<String, String> _userNames = {};
 
   @override
   void dispose() {
+    _annotationsSub?.cancel();
     _titleCtrl.dispose(); _codeCtrl.dispose();
     _annotCtrl.dispose(); _nameCtrl.dispose();
     super.dispose();
@@ -37,43 +43,148 @@ class _CollaborationScreenState extends ConsumerState<CollaborationScreen> {
 
   Future<void> _createSession() async {
     setState(() => _state = _ScreenState.creating);
-    final session = await CollaborationService.createSession(
-      title: _titleCtrl.text.trim(),
-      creatorId: 'demo_user',
-      creatorName: _nameCtrl.text.trim(),
-    );
-    _annotations = CollaborationService.demoAnnotations();
-    setState(() { _session = session; _state = _ScreenState.inSession; });
+    final isDemoMode = ref.read(isDemoModeProvider);
+    final userId = isDemoMode
+        ? 'demo_user'
+        : (Supabase.instance.client.auth.currentUser?.id ?? 'demo_user');
+    final creatorName = _nameCtrl.text.trim();
+
+    try {
+      final session = await CollaborationService.createSession(
+        title: _titleCtrl.text.trim(),
+        creatorId: userId,
+        creatorName: creatorName,
+        isDemoMode: isDemoMode,
+      );
+      _setupSession(session, isDemoMode);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create session: $e')),
+        );
+        setState(() => _state = _ScreenState.lobby);
+      }
+    }
   }
 
   Future<void> _joinSession() async {
     if (_codeCtrl.text.trim().length != 6) return;
     setState(() => _state = _ScreenState.joining);
-    final session = await CollaborationService.joinSession(
-      sessionCode: _codeCtrl.text.trim().toUpperCase(),
-      userId: 'demo_user',
-      displayName: _nameCtrl.text.trim(),
-    );
-    if (session != null) {
-      _annotations = CollaborationService.demoAnnotations();
-      setState(() { _session = session; _state = _ScreenState.inSession; });
-    } else {
-      setState(() => _state = _ScreenState.lobby);
+    final isDemoMode = ref.read(isDemoModeProvider);
+    final userId = isDemoMode
+        ? 'demo_user'
+        : (Supabase.instance.client.auth.currentUser?.id ?? 'demo_user');
+
+    try {
+      final session = await CollaborationService.joinSession(
+        sessionCode: _codeCtrl.text.trim().toUpperCase(),
+        userId: userId,
+        displayName: _nameCtrl.text.trim(),
+        isDemoMode: isDemoMode,
+      );
+      _setupSession(session, isDemoMode);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to join session: $e')),
+        );
+        setState(() => _state = _ScreenState.lobby);
+      }
     }
+  }
+
+  void _setupSession(CollaborationSession? session, bool isDemoMode) {
+    if (session == null) {
+      setState(() => _state = _ScreenState.lobby);
+      return;
+    }
+
+    _session = session;
+    _annotations = isDemoMode ? CollaborationService.demoAnnotations() : [];
+
+    if (!isDemoMode) {
+      for (final p in session.participants) {
+        _userNames[p.userId] = p.displayName;
+      }
+
+      _annotationsSub = Supabase.instance.client
+          .from('session_annotations')
+          .stream(primaryKey: ['id'])
+          .eq('session_id', session.id)
+          .order('created_at', ascending: true)
+          .listen((data) {
+            final list = <SessionAnnotation>[];
+            for (final row in data) {
+              final uid = row['user_id'] as String;
+              String name = _userNames[uid] ?? 'Researcher';
+
+              if (!_userNames.containsKey(uid)) {
+                _userNames[uid] = 'Researcher';
+                Supabase.instance.client
+                    .from('profiles')
+                    .select('name')
+                    .eq('id', uid)
+                    .maybeSingle()
+                    .then((profile) {
+                      if (profile != null && profile['name'] != null) {
+                        final n = profile['name'] as String;
+                        if (n.isNotEmpty && mounted) {
+                          setState(() {
+                            _userNames[uid] = n;
+                          });
+                        }
+                      }
+                    });
+              }
+
+              list.add(SessionAnnotation(
+                id: row['id'] as String,
+                sessionId: row['session_id'] as String,
+                userId: uid,
+                authorName: name,
+                content: row['note_text'] as String? ?? '',
+                targetModule: row['screen'] as String?,
+                createdAt: DateTime.tryParse(row['created_at'] as String? ?? '') ?? DateTime.now(),
+              ));
+            }
+            if (mounted) {
+              setState(() {
+                _annotations = list;
+              });
+            }
+          });
+    }
+
+    setState(() {
+      _state = _ScreenState.inSession;
+    });
   }
 
   void _addAnnotation() {
     if (_annotCtrl.text.trim().isEmpty) return;
+    final isDemoMode = ref.read(isDemoModeProvider);
+    final userId = isDemoMode
+        ? 'demo_user'
+        : (Supabase.instance.client.auth.currentUser?.id ?? 'demo_user');
+
     final ann = CollaborationService.createAnnotation(
       sessionId: _session!.id,
-      userId: 'demo_user',
+      userId: userId,
       authorName: _nameCtrl.text.trim(),
       content: _annotCtrl.text.trim(),
+      isDemoMode: isDemoMode,
     );
-    setState(() { _annotations.add(ann); _annotCtrl.clear(); });
+    if (isDemoMode) {
+      setState(() { _annotations.add(ann); _annotCtrl.clear(); });
+    } else {
+      _annotCtrl.clear();
+    }
   }
 
   void _leaveSession() {
+    _annotationsSub?.cancel();
+    _annotationsSub = null;
+    _userNames.clear();
     setState(() { _state = _ScreenState.lobby; _session = null; _annotations = []; });
   }
 

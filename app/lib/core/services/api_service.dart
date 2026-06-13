@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:dio/dio.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../models/app_error.dart';
@@ -19,6 +20,12 @@ class ApiService {
         results.every((r) => r == ConnectivityResult.none);
   }
 
+  static String _proxiedUrl(String url) {
+    if (!kIsWeb) return url;
+    if (url.contains('supabase.co')) return url;
+    return 'https://corsproxy.io/?${Uri.encodeComponent(url)}';
+  }
+
   static Future<T> get<T>(String url, {
     Map<String, dynamic>? params,
     int maxRetries = 3,
@@ -26,9 +33,19 @@ class ApiService {
     if (await _isOffline()) {
       throw const NetworkError('No internet connection. Demo mode works offline.');
     }
+    
+    String targetUrl = url;
+    if (params != null && params.isNotEmpty) {
+      final queryString = params.entries
+          .map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}')
+          .join('&');
+      targetUrl = '$url?$queryString';
+    }
+    final finalUrl = _proxiedUrl(targetUrl);
+
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        final response = await _dio.get(url, queryParameters: params);
+        final response = await _dio.get(finalUrl);
         if (response.data == null) throw const ParseError('Empty response');
         return response.data as T;
       } on DioException catch (e) {
@@ -58,9 +75,10 @@ class ApiService {
     if (await _isOffline()) {
       throw const NetworkError('No internet connection.');
     }
+    final finalUrl = _proxiedUrl(url);
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        final response = await _dio.post(url, data: body);
+        final response = await _dio.post(finalUrl, data: body);
         return response.data as Map<String, dynamic>;
       } on DioException {
         if (attempt == maxRetries) throw const NetworkError('GraphQL request failed.');
@@ -78,10 +96,18 @@ class ApiService {
     if (await _isOffline()) {
       throw const NetworkError('No internet connection.');
     }
+    String targetUrl = url;
+    if (params != null && params.isNotEmpty) {
+      final queryString = params.entries
+          .map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}')
+          .join('&');
+      targetUrl = '$url?$queryString';
+    }
+    final finalUrl = _proxiedUrl(targetUrl);
+
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        final response = await _dio.get(url,
-          queryParameters: params,
+        final response = await _dio.get(finalUrl,
           options: Options(responseType: ResponseType.plain),
         );
         return response.data.toString();

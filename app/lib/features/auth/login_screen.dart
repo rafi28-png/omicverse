@@ -173,24 +173,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
 
                 // Demo mode button
-                if (isDemoMode) ...[
-                  const SizedBox(height: 24),
-                  NeonButton(
-                    label: 'Continue in Demo Mode',
-                    icon: Icons.science_outlined,
-                    color: kNeonAmber,
-                    onPressed: () => context.go('/home'),
+                const SizedBox(height: 24),
+                NeonButton(
+                  label: 'Continue in Demo Mode',
+                  icon: Icons.science_outlined,
+                  color: kNeonAmber,
+                  onPressed: () {
+                    ref.read(isDemoModeProvider.notifier).state = true;
+                    context.go('/home');
+                  },
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Explore with bundled sample data — no account needed',
+                  style: tsBody().copyWith(
+                    color: kTextMuted,
+                    fontSize: 11,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Explore with bundled sample data — no account needed',
-                    style: tsBody().copyWith(
-                      color: kTextMuted,
-                      fontSize: 11,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                  textAlign: TextAlign.center,
+                ),
               ],
             ),
           ),

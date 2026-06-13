@@ -56,7 +56,8 @@ class _VariantScreenState extends ConsumerState<VariantScreen> {
 
       // Only annotate first 50 variants for demo speed
       final toAnnotate = result.variants.take(50).toList();
-      _annotated = await VariantAnnotationService.annotate(toAnnotate);
+      final isDemoMode = ref.read(isDemoModeProvider);
+      _annotated = await VariantAnnotationService.annotate(toAnnotate, isDemoMode: isDemoMode);
 
       setState(() => _state = _ScreenState.results);
     } catch (e) {
@@ -96,7 +97,8 @@ class _VariantScreenState extends ConsumerState<VariantScreen> {
 
       setState(() => _state = _ScreenState.annotating);
       final toAnnotate = result.variants.take(50).toList();
-      _annotated = await VariantAnnotationService.annotate(toAnnotate);
+      final isDemoMode = ref.read(isDemoModeProvider);
+      _annotated = await VariantAnnotationService.annotate(toAnnotate, isDemoMode: isDemoMode);
 
       setState(() => _state = _ScreenState.results);
     } catch (e) {

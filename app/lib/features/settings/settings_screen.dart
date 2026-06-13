@@ -95,6 +95,9 @@ class SettingsScreen extends ConsumerWidget {
                           value: isDemoMode,
                           onChanged: (val) {
                             ref.read(isDemoModeProvider.notifier).state = val;
+                            if (!val && !AuthService.isLoggedIn) {
+                              context.go('/login');
+                            }
                           },
                           thumbColor: const WidgetStatePropertyAll(kNeonTeal),
                         ),

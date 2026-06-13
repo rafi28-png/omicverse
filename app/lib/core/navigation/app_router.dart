@@ -1,6 +1,9 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_navigator.dart';
+import '../services/auth_service.dart';
+import '../providers/app_providers.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 import '../../features/auth/login_screen.dart';
@@ -25,10 +28,18 @@ import '../../features/genome_3d/genome_3d_screen.dart';
 import '../../features/multi_omics/multi_omics_screen.dart';
 import '../../features/collaboration/collaboration_screen.dart';
 
-GoRouter createRouter() {
+GoRouter createRouter(Ref ref) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/home',
+    redirect: (context, state) {
+      final isDemo = ref.read(isDemoModeProvider);
+      final isLoggedIn = AuthService.isLoggedIn;
+      if (!isDemo && !isLoggedIn && state.matchedLocation != '/login') {
+        return '/login';
+      }
+      return null;
+    },
     routes: [
       GoRoute(path: '/splash',      builder: (c, s) => const _PlaceholderScreen('Splash', kNeonTeal)),
       GoRoute(path: '/login',       builder: (c, s) => const LoginScreen()),
