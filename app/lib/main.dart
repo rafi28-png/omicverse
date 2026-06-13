@@ -74,7 +74,13 @@ void main() {
           );
 
     // Step 6: App version
-    final info = await PackageInfo.fromPlatform();
+    String appVersion = '1.0.0';
+    try {
+      final info = await PackageInfo.fromPlatform();
+      appVersion = info.version;
+    } catch (e) {
+      debugPrint('Failed to load package info: $e');
+    }
 
     // Step 7: Orientations
     await SystemChrome.setPreferredOrientations([
@@ -85,7 +91,7 @@ void main() {
 
     runApp(ProviderScope(
       overrides: [
-        appVersionProvider.overrideWithValue(info.version),
+        appVersionProvider.overrideWithValue(appVersion),
         appConfigProvider.overrideWithValue(finalConfig),
       ],
       child: OmicVerseApp(supabaseConfigured: supabaseInitialized),
