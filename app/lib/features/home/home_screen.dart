@@ -32,6 +32,8 @@ final _modules = [
   const _ModuleInfo('Splicing', 'Alternative splicing events', Icons.call_split, '/splicing', kGradSplicing),
   const _ModuleInfo('Drug', 'Drug-gene interactions', Icons.medication, '/drug', kGradDrug),
   const _ModuleInfo('3D Genome', 'Chromatin conformation', Icons.view_in_ar_outlined, '/genome_3d', kGrad3DGenome),
+  const _ModuleInfo('Multi-Omics', 'Unified gene profiles', Icons.hub_outlined, '/multi_omics', [kNeonTeal, kNeonPurple]),
+  const _ModuleInfo('Collaboration', 'Real-time project sharing', Icons.groups_outlined, '/collaboration', [kNeonPink, kNeonBlue]),
 ];
 
 class HomeScreen extends ConsumerWidget {

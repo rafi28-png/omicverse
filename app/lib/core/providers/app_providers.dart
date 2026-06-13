@@ -16,7 +16,7 @@ final appConfigProvider = Provider<AppConfig>((ref) {
 
 /// Demo mode preference — true = offline bundled data, no network calls.
 /// Persisted via Hive in Phase 4. For now, defaults based on config.
-final isDemoModeProvider = Provider<bool>((ref) {
+final isDemoModeProvider = StateProvider<bool>((ref) {
   final config = ref.watch(appConfigProvider);
   return !config.isSupabaseConfigured;
 });

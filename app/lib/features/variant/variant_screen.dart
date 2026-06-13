@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -72,6 +74,37 @@ class _VariantScreenState extends ConsumerState<VariantScreen> {
       _parseResult = null;
       _annotated = null;
     });
+  }
+
+  Future<void> _loadSampleData() async {
+    setState(() => _state = _ScreenState.parsing);
+    await Future.delayed(const Duration(milliseconds: 600));
+    const sampleVcf = '##fileformat=VCFv4.2\n'
+        '##reference=GRCh38\n'
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
+        '17\t7673802\t.\tA\tG\t100\tPASS\t.\n'
+        '17\t7674220\t.\tC\tT\t100\tPASS\t.\n'
+        '13\t32315474\t.\tT\tG\t100\tPASS\t.\n'
+        '7\t55181378\t.\tG\tA\t100\tPASS\t.\n'
+        '1\t43350284\t.\tC\tT\t100\tPASS\t.\n';
+
+    try {
+      final bytes = utf8.encode(sampleVcf) as Uint8List;
+      final result = await VcfParser.parse(bytes, 'sample.vcf');
+      _parseResult = result;
+      _selectedGenome = result.referenceGenome;
+
+      setState(() => _state = _ScreenState.annotating);
+      final toAnnotate = result.variants.take(50).toList();
+      _annotated = await VariantAnnotationService.annotate(toAnnotate);
+
+      setState(() => _state = _ScreenState.results);
+    } catch (e) {
+      setState(() {
+        _state = _ScreenState.error;
+        _error = e.toString();
+      });
+    }
   }
 
   List<AnnotatedVariant> get _filteredVariants {
@@ -183,6 +216,15 @@ class _VariantScreenState extends ConsumerState<VariantScreen> {
           label: 'Upload VCF file',
           acceptedFormats: '.vcf, .vcf.gz',
           onTap: _pickFile,
+        ),
+        const SizedBox(height: 16),
+        Text('OR', style: tsLabel().copyWith(color: kTextMuted)),
+        const SizedBox(height: 16),
+        NeonButton(
+          label: 'Load Sample VCF (GRCh38)',
+          icon: Icons.science_outlined,
+          color: kNeonAmber,
+          onPressed: _loadSampleData,
         ),
       ],
     );

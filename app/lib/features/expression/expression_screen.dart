@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -62,6 +64,38 @@ class _ExpressionScreenState extends ConsumerState<ExpressionScreen> {
       _result = null;
       _searchQuery = '';
     });
+  }
+
+  Future<void> _loadSampleData() async {
+    setState(() => _state = _ScreenState.parsing);
+    await Future.delayed(const Duration(milliseconds: 600));
+    const sampleCsv = 'gene,log2FoldChange,pValue,padj,baseMean\n'
+        'TP53,2.45,0.00012,0.0014,1450.5\n'
+        'BRCA1,-1.82,0.0024,0.012,890.2\n'
+        'EGFR,3.12,0.000045,0.0008,2450.1\n'
+        'MYC,1.98,0.0058,0.024,1120.3\n'
+        'PTEN,-2.15,0.00095,0.0068,750.4\n'
+        'MDM2,1.54,0.12,0.32,1320.0\n'
+        'GAPDH,0.05,0.85,0.92,5430.2\n'
+        'ACTB,-0.02,0.91,0.97,8900.5\n'
+        'VEGFA,2.89,0.00021,0.0021,950.8\n'
+        'IL6,3.42,0.00008,0.0011,420.2\n'
+        'TNF,2.11,0.0041,0.018,610.5\n'
+        'AKT1,-0.12,0.45,0.62,1850.3\n';
+
+    try {
+      final bytes = utf8.encode(sampleCsv) as Uint8List;
+      final result = await ExpressionParser.parse(bytes, 'sample.csv');
+      setState(() {
+        _result = result;
+        _state = _ScreenState.results;
+      });
+    } catch (e) {
+      setState(() {
+        _state = _ScreenState.error;
+        _error = e.toString();
+      });
+    }
   }
 
   List<ExpressionGene> get _filteredGenes {
@@ -132,10 +166,23 @@ class _ExpressionScreenState extends ConsumerState<ExpressionScreen> {
   Widget _buildBody() {
     switch (_state) {
       case _ScreenState.upload:
-        return FileUploadZone(
-          label: 'Upload expression data (DESeq2, edgeR, limma)',
-          acceptedFormats: '.csv, .tsv, .txt',
-          onTap: _pickFile,
+        return Column(
+          children: [
+            FileUploadZone(
+              label: 'Upload expression data (DESeq2, edgeR, limma)',
+              acceptedFormats: '.csv, .tsv, .txt',
+              onTap: _pickFile,
+            ),
+            const SizedBox(height: 16),
+            Text('OR', style: tsLabel().copyWith(color: kTextMuted)),
+            const SizedBox(height: 16),
+            NeonButton(
+              label: 'Load Sample Expression Data',
+              icon: Icons.science_outlined,
+              color: kNeonAmber,
+              onPressed: _loadSampleData,
+            ),
+          ],
         );
       case _ScreenState.parsing:
         return const Center(

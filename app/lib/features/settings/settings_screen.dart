@@ -88,13 +88,26 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       const Divider(color: kBorder, height: 1, indent: 56),
                       _SettingsTile(
+                        icon: Icons.science_outlined,
+                        title: 'Demo Mode',
+                        subtitle: 'Use mock offline data instead of live APIs',
+                        trailing: Switch(
+                          value: isDemoMode,
+                          onChanged: (val) {
+                            ref.read(isDemoModeProvider.notifier).state = val;
+                          },
+                          thumbColor: const WidgetStatePropertyAll(kNeonTeal),
+                        ),
+                      ),
+                      const Divider(color: kBorder, height: 1, indent: 56),
+                      _SettingsTile(
                         icon: Icons.accessibility_new,
                         title: 'Reduce Motion',
                         subtitle: 'Disable animations throughout the app',
                         trailing: Switch(
                           value: false,
                           onChanged: (_) {},
-                          thumbColor: WidgetStatePropertyAll(kNeonTeal),
+                          thumbColor: const WidgetStatePropertyAll(kNeonTeal),
                         ),
                       ),
                     ],
