@@ -7,7 +7,7 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight request
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -22,27 +22,18 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    // The service role key is automatically available as an env variable in all edge functions
+    // Service role key is automatically available in all Supabase Edge Functions
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Check if user with this email already exists
-    const { data: existingUsers } = await supabase.auth.admin.listUsers()
-    const alreadyExists = existingUsers?.users?.some(u => u.email === email)
-    if (alreadyExists) {
-      return new Response(
-        JSON.stringify({ error: 'An account with this email already exists. Please sign in.' }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Use Admin API to create user — bypasses GoTrue email rate limits entirely.
-    // email_confirm: true means the user is verified immediately (no confirmation email needed).
+    // Create user via Admin API — bypasses GoTrue email rate limits entirely.
+    // email_confirm: true means the user is verified immediately.
+    // If the email already exists, createUser() returns an error automatically.
     const { data, error } = await supabase.auth.admin.createUser({
-      email: email,
-      password: password,
+      email,
+      password,
       email_confirm: true,
       user_metadata: {
         name: name ?? '',
@@ -51,8 +42,12 @@ Deno.serve(async (req: Request) => {
     })
 
     if (error) {
+      // Surface "already registered" as a clear user-facing message
+      const msg = error.message.toLowerCase().includes('already')
+        ? 'An account with this email already exists. Please sign in instead.'
+        : error.message
       return new Response(
-        JSON.stringify({ error: error.message }),
+        JSON.stringify({ error: msg }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -62,7 +57,7 @@ Deno.serve(async (req: Request) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
+    const message = err instanceof Error ? err.message : 'Unknown server error'
     return new Response(
       JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
