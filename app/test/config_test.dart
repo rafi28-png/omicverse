@@ -115,6 +115,26 @@ void main() {
         dartDefineKey: 'key',
       );
       expect(config3.supabaseUrl, 'https://test.supabase.co');
+
+      // Test with quotes
+      final config4 = AppConfig.fromEnvironment(
+        dartDefineUrl: '"https://test.supabase.co/rest/v1/"',
+        dartDefineKey: 'key',
+      );
+      expect(config4.supabaseUrl, 'https://test.supabase.co');
+
+      final config5 = AppConfig.fromEnvironment(
+        dartDefineUrl: "'https://test.supabase.co/rest/v1'",
+        dartDefineKey: 'key',
+      );
+      expect(config5.supabaseUrl, 'https://test.supabase.co');
+
+      // Test missing scheme
+      final config6 = AppConfig.fromEnvironment(
+        dartDefineUrl: 'test.supabase.co/rest/v1/',
+        dartDefineKey: 'key',
+      );
+      expect(config6.supabaseUrl, 'https://test.supabase.co');
     });
   });
 }
