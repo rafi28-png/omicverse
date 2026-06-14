@@ -5,6 +5,7 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 import '../../core/widgets/research_disclaimer.dart';
 import '../../core/providers/app_providers.dart';
+import '../../core/services/auth_service.dart';
 
 class _ModuleInfo {
   final String title;
@@ -58,7 +59,7 @@ class HomeScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top row: logo + settings
+                    // Top row: logo + demo badge + settings
                     Row(
                       children: [
                         Container(
@@ -90,6 +91,16 @@ class HomeScreen extends ConsumerWidget {
                             ),
                             child: Text('DEMO', style: tsBadge().copyWith(color: kNeonAmber)),
                           ),
+                        if (!isDemoMode)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: kNeonTeal.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: kNeonTeal.withValues(alpha: 0.35)),
+                            ),
+                            child: Text('LIVE', style: tsBadge().copyWith(color: kNeonTeal)),
+                          ),
                         const SizedBox(width: 12),
                         IconButton(
                           icon: const Icon(Icons.settings_outlined, color: kTextSecondary),
@@ -98,8 +109,38 @@ class HomeScreen extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: 28),
-                    // Welcome text
-                    Text('Explore Modules', style: tsHero().copyWith(fontSize: 28)),
+
+                    // Welcome text — personalised if logged in
+                    if (!isDemoMode) ...[
+                      Builder(builder: (context) {
+                        final user = AuthService.currentUser;
+                        final name = user?.userMetadata?['name'] as String?;
+                        final email = user?.email ?? '';
+                        final displayName = (name != null && name.isNotEmpty) ? name : email;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome back,',
+                              style: tsSubtitle(),
+                            ),
+                            Text(
+                              displayName,
+                              style: tsHero().copyWith(fontSize: 22, color: kNeonTeal),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        );
+                      }),
+                      const SizedBox(height: 12),
+                    ] else ...[
+                      Text('Explore Modules', style: tsHero().copyWith(fontSize: 28)),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Sign in to save your analyses and access live data',
+                        style: tsSubtitle(),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     Text(
                       'Tap a module to begin your analysis',

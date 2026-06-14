@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 import '../../core/widgets/neon_button.dart';
@@ -49,7 +50,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           name: _nameCtrl.text.trim(),
         );
       }
-      if (mounted) context.go('/home');
+
+      // ✅ Turn off demo mode so DEMO badge disappears and real features activate
+      if (mounted) {
+        ref.read(isDemoModeProvider.notifier).state = false;
+        Hive.box<dynamic>('preferences').put('isDemoMode', false);
+        context.go('/home');
+      }
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
