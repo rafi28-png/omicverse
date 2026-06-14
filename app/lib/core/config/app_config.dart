@@ -42,14 +42,11 @@ class AppConfig {
   }) {
     String rawUrl = dartDefineUrl.isNotEmpty ? dartDefineUrl : (dotenvUrl ?? '');
     String cleanUrl = rawUrl.trim();
-    if (cleanUrl.endsWith('/')) {
-      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1);
-    }
-    if (cleanUrl.endsWith('/rest/v1')) {
-      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 8);
-    }
-    if (cleanUrl.endsWith('/')) {
-      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1);
+    if (cleanUrl.isNotEmpty) {
+      final uri = Uri.tryParse(cleanUrl);
+      if (uri != null && uri.host.isNotEmpty) {
+        cleanUrl = '${uri.scheme}://${uri.host}${uri.hasPort ? ":${uri.port}" : ""}';
+      }
     }
 
     return AppConfig(
