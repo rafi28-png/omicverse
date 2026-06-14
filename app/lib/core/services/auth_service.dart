@@ -3,11 +3,19 @@ import 'package:go_router/go_router.dart';
 import '../navigation/app_navigator.dart';
 
 class AuthService {
-  static SupabaseClient get _sb => Supabase.instance.client;
+  static SupabaseClient? get _sb {
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Call once in app init to monitor token refresh.
   static void setupTokenRefresh() {
-    _sb.auth.onAuthStateChange.listen((data) {
+    final client = _sb;
+    if (client == null) return;
+    client.auth.onAuthStateChange.listen((data) {
       if (data.event == AuthChangeEvent.signedOut) {
         final ctx = rootNavigatorKey.currentContext;
         if (ctx != null && ctx.mounted) ctx.go('/login');
@@ -17,8 +25,10 @@ class AuthService {
 
   /// Handle deep link callback from OAuth.
   static Future<void> handleDeepLink(Uri uri) async {
+    final client = _sb;
+    if (client == null) return;
     if (uri.scheme == 'io.supabase.omicverse') {
-      await _sb.auth.getSessionFromUrl(uri);
+      await client.auth.getSessionFromUrl(uri);
     }
   }
 
@@ -29,7 +39,11 @@ class AuthService {
     String? name,
     String? institution,
   }) async {
-    return await _sb.auth.signUp(
+    final client = _sb;
+    if (client == null) {
+      throw const AuthException('Supabase connection is not initialized. Please configure it in settings.');
+    }
+    return await client.auth.signUp(
       email: email,
       password: password,
       data: {
@@ -44,7 +58,11 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    return await _sb.auth.signInWithPassword(
+    final client = _sb;
+    if (client == null) {
+      throw const AuthException('Supabase connection is not initialized. Please configure it in settings.');
+    }
+    return await client.auth.signInWithPassword(
       email: email,
       password: password,
     );
@@ -52,19 +70,35 @@ class AuthService {
 
   /// Sign out.
   static Future<void> signOut() async {
-    await _sb.auth.signOut();
+    final client = _sb;
+    if (client == null) return;
+    await client.auth.signOut();
   }
 
   /// Get current user.
-  static User? get currentUser => _sb.auth.currentUser;
+  static User? get currentUser {
+    final client = _sb;
+    if (client == null) return null;
+    return client.auth.currentUser;
+  }
 
   /// Check if logged in.
-  static bool get isLoggedIn => _sb.auth.currentUser != null;
+  static bool get isLoggedIn {
+    final client = _sb;
+    if (client == null) return false;
+    return client.auth.currentUser != null;
+  }
 
   /// Delete all user app data (GDPR) — uses auth.uid() internally in SQL.
   static Future<void> deleteAppData() async {
-    await _sb.rpc('delete_user_data');
-    await _sb.auth.signOut();
+    final client = _sb;
+    if (client == null) {
+      final ctx = rootNavigatorKey.currentContext;
+      if (ctx != null && ctx.mounted) ctx.go('/login');
+      return;
+    }
+    await client.rpc('delete_user_data');
+    await client.auth.signOut();
     final ctx = rootNavigatorKey.currentContext;
     if (ctx != null && ctx.mounted) ctx.go('/login');
   }
