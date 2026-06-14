@@ -62,6 +62,21 @@ void main() {
       }
     }
 
+    // Step 5b: Guard demo-mode state.
+    // If a previous user logged in (storing isDemoMode=false in Hive) but the
+    // current visitor has no valid session, reset to demo mode so they cannot
+    // access live features without authenticating.
+    final prefBox = Hive.box<dynamic>('preferences');
+    final storedDemoMode = prefBox.get('isDemoMode', defaultValue: true) as bool;
+    if (!storedDemoMode) {
+      // Only keep live mode if Supabase is up AND there is a current session.
+      final hasSession = supabaseInitialized &&
+          Supabase.instance.client.auth.currentSession != null;
+      if (!hasSession) {
+        prefBox.put('isDemoMode', true); // revert to demo mode
+      }
+    }
+
     final finalConfig = supabaseInitialized
         ? config
         : AppConfig(
@@ -74,6 +89,7 @@ void main() {
             cacheTtlHours: config.cacheTtlHours,
             debugMode: config.debugMode,
           );
+
 
     // Step 6: App version
     String appVersion = '1.0.0';
