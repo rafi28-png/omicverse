@@ -379,8 +379,8 @@ class _ExpressionScreenState extends ConsumerState<ExpressionScreen> {
           drawVerticalLine: true,
           horizontalInterval: 5,
           verticalInterval: 2,
-          getDrawingHorizontalLine: (_) => FlLine(color: kBorder, strokeWidth: 0.5),
-          getDrawingVerticalLine: (_) => FlLine(color: kBorder, strokeWidth: 0.5),
+          getDrawingHorizontalLine: (_) => const FlLine(color: kBorder, strokeWidth: 0.5),
+          getDrawingVerticalLine: (_) => const FlLine(color: kBorder, strokeWidth: 0.5),
         ),
         borderData: FlBorderData(
           show: true,

@@ -1,6 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:omicverse/core/theme/colors.dart';
 import 'package:omicverse/core/models/app_error.dart';
+import 'package:omicverse/core/widgets/error_boundary.dart';
+import 'package:omicverse/core/widgets/error_state.dart';
 
 /// Phase 12 — Release Hardening Tests
 /// Covers: WCAG contrast, error models, disclaimer text, CSP requirements
@@ -114,4 +117,70 @@ void main() {
       expect(kGradCRISPR, isNotEmpty);
     });
   });
+
+  group('ErrorBoundary & ErrorState', () {
+    testWidgets('ErrorBoundary catches build errors and displays ErrorState', (WidgetTester tester) async {
+      final originalBuilder = ErrorWidget.builder;
+      ErrorWidget.builder = (FlutterErrorDetails details) {
+        final handled = ErrorBoundary.reportError(details);
+        if (handled) {
+          return const SizedBox.shrink();
+        }
+        return originalBuilder(details);
+      };
+
+      try {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: ErrorBoundary(
+              moduleName: 'Test Module',
+              child: _ThrowingWidget(),
+            ),
+          ),
+        );
+
+        expect(find.byType(ErrorState), findsNothing);
+        expect(find.byType(ElevatedButton), findsOneWidget);
+
+        // Trigger the throw
+        await tester.tap(find.byType(ElevatedButton));
+        await tester.pump();
+
+        // Consume the expected exception
+        final exception = tester.takeException();
+        expect(exception, isNotNull);
+
+        // Rebuild to render ErrorState
+        await tester.pump();
+
+        expect(find.byType(ErrorState), findsOneWidget);
+        expect(find.textContaining('Test Module encountered an error'), findsOneWidget);
+        expect(find.textContaining('Intentional test build error'), findsOneWidget);
+      } finally {
+        ErrorWidget.builder = originalBuilder;
+      }
+    });
+  });
+}
+
+class _ThrowingWidget extends StatefulWidget {
+  const _ThrowingWidget();
+
+  @override
+  State<_ThrowingWidget> createState() => _ThrowingWidgetState();
+}
+
+class _ThrowingWidgetState extends State<_ThrowingWidget> {
+  bool _shouldThrow = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_shouldThrow) {
+      throw Exception('Intentional test build error');
+    }
+    return ElevatedButton(
+      onPressed: () => setState(() => _shouldThrow = true),
+      child: const Text('Trigger'),
+    );
+  }
 }

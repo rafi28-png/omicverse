@@ -8,7 +8,7 @@ Uint8List _toBytes(String s) => Uint8List.fromList(utf8.encode(s));
 void main() {
   group('VcfParser', () {
     test('parses simple VCF', () async {
-      final vcf = '##fileformat=VCFv4.2\n'
+      const vcf = '##fileformat=VCFv4.2\n'
           '##reference=GRCh38\n'
           '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
           'chr17\t7675088\trs28934578\tG\tA\t100\tPASS\tDP=30\n'
@@ -23,7 +23,7 @@ void main() {
     });
 
     test('detects GRCh37 reference', () async {
-      final vcf = '##fileformat=VCFv4.1\n'
+      const vcf = '##fileformat=VCFv4.1\n'
           '##reference=hg19\n'
           '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
           '1\t12345\t.\tA\tG\t99\tPASS\t.\n';
@@ -32,7 +32,7 @@ void main() {
     });
 
     test('skips invalid chromosomes', () async {
-      final vcf = '##fileformat=VCFv4.2\n'
+      const vcf = '##fileformat=VCFv4.2\n'
           '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
           'chrUn\t100\t.\tA\tG\t99\tPASS\t.\n'
           'chr1\t200\t.\tC\tT\t99\tPASS\t.\n';
@@ -42,7 +42,7 @@ void main() {
     });
 
     test('skips multi-allelic variants', () async {
-      final vcf = '##fileformat=VCFv4.2\n'
+      const vcf = '##fileformat=VCFv4.2\n'
           '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
           'chr1\t100\t.\tA\tG,T\t99\tPASS\t.\n'
           'chr1\t200\t.\tC\tT\t99\tPASS\t.\n';
@@ -60,7 +60,7 @@ void main() {
     });
 
     test('handles malformed lines', () async {
-      final vcf = '##fileformat=VCFv4.2\n'
+      const vcf = '##fileformat=VCFv4.2\n'
           '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
           'chr1\t100\n'
           'garbage line\n'
@@ -93,7 +93,7 @@ void main() {
     });
 
     test('normalizes chr prefix', () async {
-      final vcf = '##fileformat=VCFv4.2\n'
+      const vcf = '##fileformat=VCFv4.2\n'
           '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
           'chrX\t100\t.\tA\tG\t99\tPASS\t.\n';
       final result = await VcfParser.parse(_toBytes(vcf), 'test.vcf');

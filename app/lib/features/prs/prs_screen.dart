@@ -148,7 +148,7 @@ class _PrsScreenState extends ConsumerState<PrsScreen> {
             Container(width: 50, height: 50,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                gradient: LinearGradient(colors: kGradPRS,
+                gradient: const LinearGradient(colors: kGradPRS,
                   begin: Alignment.topLeft, end: Alignment.bottomRight)),
               child: Center(child: Text(s.pgsId.replaceAll('PGS', ''),
                 style: tsMono().copyWith(fontSize: 10, color: kVoid, fontWeight: FontWeight.w700)))),

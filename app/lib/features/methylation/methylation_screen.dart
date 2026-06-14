@@ -81,7 +81,7 @@ class _MethylationScreenState extends ConsumerState<MethylationScreen> {
     final clock = _clock!;
     return GlowCard(glowColor: kGradEpigenome[0], child: Row(children: [
       Container(width: 80, height: 80,
-        decoration: BoxDecoration(shape: BoxShape.circle,
+        decoration: const BoxDecoration(shape: BoxShape.circle,
           gradient: LinearGradient(colors: kGradEpigenome)),
         child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(clock.predictedAge.toStringAsFixed(0),
@@ -150,7 +150,7 @@ class _MethylationScreenState extends ConsumerState<MethylationScreen> {
             rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
           gridData: FlGridData(show: true,
-            getDrawingHorizontalLine: (_) => FlLine(color: kBorder, strokeWidth: 0.5)),
+            getDrawingHorizontalLine: (_) => const FlLine(color: kBorder, strokeWidth: 0.5)),
           borderData: FlBorderData(show: true, border: Border.all(color: kBorder, width: 0.5)),
           barGroups: List.generate(10, (i) => BarChartGroupData(x: i,
             barRods: [BarChartRodData(toY: buckets[i].toDouble(),

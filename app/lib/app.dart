@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/navigation/app_router.dart';
 import 'core/theme/colors.dart';
+import 'core/widgets/error_boundary.dart';
+import 'core/widgets/error_state.dart';
 
 final routerProvider = Provider<GoRouter>((ref) => createRouter(ref));
 
@@ -23,6 +25,20 @@ class _OmicVerseAppState extends ConsumerState<OmicVerseApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Register global error widget builder to intercept rendering errors
+    ErrorWidget.builder = (FlutterErrorDetails details) {
+      final handled = ErrorBoundary.reportError(details);
+      if (handled) {
+        return const SizedBox.shrink();
+      }
+      return Scaffold(
+        backgroundColor: kBackground,
+        body: ErrorState(
+          message: 'An unexpected rendering error occurred: ${details.exception}',
+        ),
+      );
+    };
   }
 
   @override

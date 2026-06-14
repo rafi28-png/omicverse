@@ -55,7 +55,7 @@ class _MultiOmicsScreenState extends ConsumerState<MultiOmicsScreen> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             ModuleHeader(title: 'Multi-Omics Integration',
               subtitle: 'Unified gene profile across all omics layers',
-              gradientColors: [kNeonTeal, kNeonPurple], icon: Icons.hub, isDemoMode: isDemoMode),
+              gradientColors: const [kNeonTeal, kNeonPurple], icon: Icons.hub, isDemoMode: isDemoMode),
             const SizedBox(height: 24),
             _buildSearchBar(),
             const SizedBox(height: 24),
@@ -134,8 +134,8 @@ class _MultiOmicsScreenState extends ConsumerState<MultiOmicsScreen> {
       // Gene header
       GlowCard(glowColor: kNeonTeal, child: Row(children: [
         Container(width: 64, height: 64,
-          decoration: BoxDecoration(shape: BoxShape.circle,
-            gradient: const LinearGradient(colors: [kNeonTeal, kNeonPurple])),
+          decoration: const BoxDecoration(shape: BoxShape.circle,
+            gradient: LinearGradient(colors: [kNeonTeal, kNeonPurple])),
           child: Center(child: Text(p.gene.substring(0, 2),
             style: tsTitle(kVoid).copyWith(fontSize: 24, fontWeight: FontWeight.w900)))),
         const SizedBox(width: 16),

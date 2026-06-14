@@ -194,7 +194,7 @@ class _EvolutionScreenState extends ConsumerState<EvolutionScreen> {
         rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       ),
       gridData: FlGridData(show: true,
-        getDrawingHorizontalLine: (_) => FlLine(color: kBorder, strokeWidth: 0.5)),
+        getDrawingHorizontalLine: (_) => const FlLine(color: kBorder, strokeWidth: 0.5)),
       borderData: FlBorderData(show: true, border: Border.all(color: kBorder, width: 0.5)),
       barGroups: List.generate(sorted.length, (i) => BarChartGroupData(x: i,
         barRods: [BarChartRodData(toY: sorted[i].percentIdentity,

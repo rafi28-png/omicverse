@@ -39,7 +39,8 @@ class ApiService {
       final queryString = params.entries
           .map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}')
           .join('&');
-      targetUrl = '$url?$queryString';
+      final separator = url.contains('?') ? '&' : '?';
+      targetUrl = '$url$separator$queryString';
     }
     final finalUrl = _proxiedUrl(targetUrl);
 
@@ -101,7 +102,8 @@ class ApiService {
       final queryString = params.entries
           .map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}')
           .join('&');
-      targetUrl = '$url?$queryString';
+      final separator = url.contains('?') ? '&' : '?';
+      targetUrl = '$url$separator$queryString';
     }
     final finalUrl = _proxiedUrl(targetUrl);
 

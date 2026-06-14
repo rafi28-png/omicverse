@@ -209,7 +209,7 @@ class _CollaborationScreenState extends ConsumerState<CollaborationScreen> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             ModuleHeader(title: 'Realtime Collaboration',
               subtitle: 'Share sessions & annotate together',
-              gradientColors: [kNeonPurple, kNeonTeal], icon: Icons.groups, isDemoMode: isDemoMode),
+              gradientColors: const [kNeonPurple, kNeonTeal], icon: Icons.groups, isDemoMode: isDemoMode),
             const SizedBox(height: 12),
             // Experimental notice
             Container(
@@ -315,8 +315,8 @@ class _CollaborationScreenState extends ConsumerState<CollaborationScreen> {
       // Session info
       GlowCard(glowColor: kNeonPurple, child: Row(children: [
         Container(width: 50, height: 50,
-          decoration: BoxDecoration(shape: BoxShape.circle,
-            gradient: const LinearGradient(colors: [kNeonPurple, kNeonTeal])),
+          decoration: const BoxDecoration(shape: BoxShape.circle,
+            gradient: LinearGradient(colors: [kNeonPurple, kNeonTeal])),
           child: const Center(child: Icon(Icons.groups, color: kVoid, size: 24))),
         const SizedBox(width: 16),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

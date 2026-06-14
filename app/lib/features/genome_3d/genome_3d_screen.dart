@@ -143,7 +143,7 @@ class _Genome3dScreenState extends ConsumerState<Genome3dScreen> {
             crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 Container(width: 40, height: 40,
-                  decoration: BoxDecoration(shape: BoxShape.circle,
+                  decoration: const BoxDecoration(shape: BoxShape.circle,
                     gradient: LinearGradient(colors: kGrad3DGenome)),
                   child: const Center(child: Icon(Icons.square_rounded, color: kVoid, size: 20))),
                 const SizedBox(width: 12),
