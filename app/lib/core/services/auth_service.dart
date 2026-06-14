@@ -33,9 +33,9 @@ class AuthService {
   }
 
   /// Sign up with email and password.
-  /// Uses the 'create-user' Edge Function as the primary path (bypasses GoTrue
-  /// email-send rate limits entirely). Falls back to standard auth.signUp if
-  /// the function has not been deployed yet.
+  /// Sends a real confirmation email via the configured SMTP (Gmail).
+  /// Returns the AuthResponse — caller should check [needsEmailVerification]
+  /// on the returned user to decide whether to show the "check your inbox" UI.
   static Future<AuthResponse> signUp({
     required String email,
     required String password,
@@ -47,46 +47,27 @@ class AuthService {
       throw const AuthException('Supabase connection is not initialized. Please configure it in settings.');
     }
 
-    // ── Primary path: Edge Function (no rate-limits, instant confirmation) ──
-    try {
-      final fnResp = await client.functions.invoke(
-        'create-user',
-        body: {
-          'email': email,
-          'password': password,
-          'name': name ?? '',
-          'institution': institution ?? '',
-        },
-      );
-
-      if (fnResp.status == 200) {
-        // User created — sign in immediately to obtain a session token.
-        return await client.auth.signInWithPassword(
-          email: email,
-          password: password,
-        );
-      }
-
-      // Edge function returned a non-200 (e.g. duplicate email).
-      final errMsg = (fnResp.data as Map<String, dynamic>?)?['error']
-          ?? 'Registration failed (status ${fnResp.status})';
-      throw AuthException(errMsg.toString());
-    } on AuthException {
-      rethrow; // surface duplicate-email and similar business errors
-    } catch (_) {
-      // Edge function not deployed yet — fall back to standard GoTrue signup.
-    }
-
-    // ── Fallback: standard GoTrue signup (may hit rate-limits on free tier) ──
     return await client.auth.signUp(
       email: email,
       password: password,
+      // After the user clicks the confirmation link in their inbox,
+      // Supabase redirects them back to the live app.
+      emailRedirectTo: 'https://rafi28-png.github.io/omicverse/',
       data: {
         if (name != null) 'name': name,
         if (institution != null) 'institution': institution,
       },
     );
   }
+
+  /// Returns true when a signup response has a user but the email is not
+  /// yet confirmed — i.e. the user must click the link in their inbox.
+  static bool needsEmailVerification(AuthResponse response) {
+    final user = response.user;
+    return user != null && user.emailConfirmedAt == null;
+  }
+
+
 
   /// Sign in with email and password.
   static Future<AuthResponse> signIn({

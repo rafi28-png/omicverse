@@ -23,6 +23,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLogin = true;
   bool _loading = false;
+  bool _verificationPending = false;
   String? _error;
 
   @override
@@ -43,19 +44,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text,
         );
+        // Sign-in: disable demo mode and go home
+        if (mounted) {
+          ref.read(isDemoModeProvider.notifier).state = false;
+          Hive.box<dynamic>('preferences').put('isDemoMode', false);
+          context.go('/home');
+        }
       } else {
-        await AuthService.signUp(
+        final result = await AuthService.signUp(
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text,
           name: _nameCtrl.text.trim(),
         );
-      }
 
-      // ✅ Turn off demo mode so DEMO badge disappears and real features activate
-      if (mounted) {
-        ref.read(isDemoModeProvider.notifier).state = false;
-        Hive.box<dynamic>('preferences').put('isDemoMode', false);
-        context.go('/home');
+        if (!mounted) return;
+
+        if (AuthService.needsEmailVerification(result)) {
+          // Email confirmation required — show inbox message
+          setState(() => _verificationPending = true);
+        } else {
+          // Auto-confirmed (shouldn't happen with Gmail SMTP but just in case)
+          ref.read(isDemoModeProvider.notifier).state = false;
+          Hive.box<dynamic>('preferences').put('isDemoMode', false);
+          context.go('/home');
+        }
       }
     } catch (e) {
       setState(() => _error = e.toString());
@@ -66,6 +78,62 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ── Email verification pending screen ──────────────────────────────────
+    if (_verificationPending) {
+      return Scaffold(
+        backgroundColor: kBackground,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 80, height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: kNeonTeal.withValues(alpha: 0.12),
+                      border: Border.all(color: kNeonTeal.withValues(alpha: 0.4)),
+                      boxShadow: [glowShadow(kNeonTeal, r: 30)],
+                    ),
+                    child: const Icon(Icons.mark_email_unread_outlined, color: kNeonTeal, size: 38),
+                  ),
+                  const SizedBox(height: 28),
+                  Text('Check your inbox!', style: tsHero().copyWith(fontSize: 26)),
+                  const SizedBox(height: 12),
+                  Text(
+                    'We sent a confirmation link to\n${_emailCtrl.text.trim()}',
+                    style: tsSubtitle().copyWith(fontSize: 15),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Click the link in the email to activate your account, then come back and sign in.',
+                    style: tsBody().copyWith(color: kTextMuted, fontSize: 13),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 36),
+                  NeonButton(
+                    label: 'Go to Sign In',
+                    icon: Icons.login,
+                    color: kNeonTeal,
+                    onPressed: () => setState(() {
+                      _verificationPending = false;
+                      _isLogin = true;
+                      _error = null;
+                    }),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ── Normal login / signup form ─────────────────────────────────────────
     return Scaffold(
       backgroundColor: kBackground,
       body: Center(
