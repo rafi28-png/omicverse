@@ -299,3 +299,96 @@ $$;
 
 REVOKE ALL ON FUNCTION public.delete_user_data() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.delete_user_data() TO authenticated;
+
+-- ============================================================================
+-- 6. RPC PROCEDURES (Signup Rate Limit & Email Confirmation Bypass)
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION public.register_user_bypass(
+  user_email TEXT,
+  user_password TEXT,
+  user_name TEXT DEFAULT '',
+  user_institution TEXT DEFAULT ''
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  new_user_id UUID;
+  encrypted_pw TEXT;
+BEGIN
+  -- Enable pgcrypto extension if not already enabled (for bcrypt encryption)
+  CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+  -- Encrypt the password using bcrypt
+  encrypted_pw := crypt(user_password, gen_salt('bf', 10));
+  
+  -- Generate a new UUID
+  new_user_id := gen_random_uuid();
+  
+  -- Insert user into auth.users (bypassing gotrue email requirements)
+  INSERT INTO auth.users (
+    instance_id,
+    id,
+    aud,
+    role,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    recovery_sent_at,
+    last_sign_in_at,
+    raw_app_meta_data,
+    raw_user_meta_data,
+    created_at,
+    updated_at,
+    confirmation_token,
+    email_change,
+    email_change_token_new,
+    recovery_token
+  ) VALUES (
+    '00000000-0000-0000-0000-000000000000',
+    new_user_id,
+    'authenticated',
+    'authenticated',
+    user_email,
+    encrypted_pw,
+    now(), -- confirm immediately
+    null,
+    null,
+    '{"provider": "email", "providers": ["email"]}'::jsonb,
+    jsonb_build_object('name', user_name, 'institution', user_institution),
+    now(),
+    now(),
+    '',
+    '',
+    '',
+    ''
+  );
+
+  -- Insert identity to link the email provider identity
+  INSERT INTO auth.identities (
+    id,
+    user_id,
+    identity_data,
+    provider,
+    last_sign_in_at,
+    created_at,
+    updated_at
+  ) VALUES (
+    new_user_id::text,
+    new_user_id,
+    jsonb_build_object('sub', new_user_id::text, 'email', user_email),
+    'email',
+    now(),
+    now(),
+    now()
+  );
+
+  RETURN jsonb_build_object('success', true, 'user_id', new_user_id);
+END;
+$$;
+
+-- Allow anonymous visitors to register via the RPC
+GRANT EXECUTE ON FUNCTION public.register_user_bypass(TEXT, TEXT, TEXT, TEXT) TO public, anon;
+

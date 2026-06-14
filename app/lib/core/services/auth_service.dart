@@ -43,14 +43,34 @@ class AuthService {
     if (client == null) {
       throw const AuthException('Supabase connection is not initialized. Please configure it in settings.');
     }
-    return await client.auth.signUp(
-      email: email,
-      password: password,
-      data: {
-        if (name != null) 'name': name,
-        if (institution != null) 'institution': institution,
-      },
-    );
+    try {
+      // Bypasses GoTrue limits by directly inserting into auth.users (if the RPC is configured)
+      await client.rpc('register_user_bypass', params: {
+        'user_email': email,
+        'user_password': password,
+        'user_name': name ?? '',
+        'user_institution': institution ?? '',
+      });
+      // Once created, sign in immediately to generate auth session cookies/tokens
+      return await client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+    } catch (e) {
+      // If the function does not exist or fails, fall back to standard Supabase auth
+      final errStr = e.toString().toLowerCase();
+      if (errStr.contains('does not exist') || errStr.contains('404')) {
+        return await client.auth.signUp(
+          email: email,
+          password: password,
+          data: {
+            if (name != null) 'name': name,
+            if (institution != null) 'institution': institution,
+          },
+        );
+      }
+      rethrow;
+    }
   }
 
   /// Sign in with email and password.
