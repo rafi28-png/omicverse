@@ -33,6 +33,9 @@ class AuthService {
   }
 
   /// Sign up with email and password.
+  /// Uses the 'create-user' Edge Function as the primary path (bypasses GoTrue
+  /// email-send rate limits entirely). Falls back to standard auth.signUp if
+  /// the function has not been deployed yet.
   static Future<AuthResponse> signUp({
     required String email,
     required String password,
@@ -43,34 +46,46 @@ class AuthService {
     if (client == null) {
       throw const AuthException('Supabase connection is not initialized. Please configure it in settings.');
     }
+
+    // ── Primary path: Edge Function (no rate-limits, instant confirmation) ──
     try {
-      // Bypasses GoTrue limits by directly inserting into auth.users (if the RPC is configured)
-      await client.rpc('register_user_bypass', params: {
-        'user_email': email,
-        'user_password': password,
-        'user_name': name ?? '',
-        'user_institution': institution ?? '',
-      });
-      // Once created, sign in immediately to generate auth session cookies/tokens
-      return await client.auth.signInWithPassword(
-        email: email,
-        password: password,
+      final fnResp = await client.functions.invoke(
+        'create-user',
+        body: {
+          'email': email,
+          'password': password,
+          'name': name ?? '',
+          'institution': institution ?? '',
+        },
       );
-    } catch (e) {
-      // If the function does not exist or fails, fall back to standard Supabase auth
-      final errStr = e.toString().toLowerCase();
-      if (errStr.contains('does not exist') || errStr.contains('404')) {
-        return await client.auth.signUp(
+
+      if (fnResp.status == 200) {
+        // User created — sign in immediately to obtain a session token.
+        return await client.auth.signInWithPassword(
           email: email,
           password: password,
-          data: {
-            if (name != null) 'name': name,
-            if (institution != null) 'institution': institution,
-          },
         );
       }
-      rethrow;
+
+      // Edge function returned a non-200 (e.g. duplicate email).
+      final errMsg = (fnResp.data as Map<String, dynamic>?)?['error']
+          ?? 'Registration failed (status ${fnResp.status})';
+      throw AuthException(errMsg.toString());
+    } on AuthException {
+      rethrow; // surface duplicate-email and similar business errors
+    } catch (_) {
+      // Edge function not deployed yet — fall back to standard GoTrue signup.
     }
+
+    // ── Fallback: standard GoTrue signup (may hit rate-limits on free tier) ──
+    return await client.auth.signUp(
+      email: email,
+      password: password,
+      data: {
+        if (name != null) 'name': name,
+        if (institution != null) 'institution': institution,
+      },
+    );
   }
 
   /// Sign in with email and password.
