@@ -7,6 +7,8 @@ import '../providers/app_providers.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 import '../../features/auth/login_screen.dart';
+import '../../features/auth/forgot_password_screen.dart';
+import '../../features/auth/reset_password_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/settings/about_screen.dart';
@@ -61,8 +63,10 @@ GoRouter createRouter(Ref ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/splash',      builder: (c, s) => const _PlaceholderScreen('Splash', kNeonTeal)),
-      GoRoute(path: '/login',       builder: (c, s) => const LoginScreen()),
+      GoRoute(path: '/splash',          builder: (c, s) => const _PlaceholderScreen('Splash', kNeonTeal)),
+      GoRoute(path: '/login',            builder: (c, s) => const LoginScreen()),
+      GoRoute(path: '/forgot-password',  builder: (c, s) => const ForgotPasswordScreen()),
+      GoRoute(path: '/reset-password',   builder: (c, s) => const ResetPasswordScreen()),
       GoRoute(path: '/home',        builder: (c, s) => const ErrorBoundary(moduleName: 'Home', child: HomeScreen())),
       GoRoute(path: '/settings',    builder: (c, s) => const ErrorBoundary(moduleName: 'Settings', child: SettingsScreen())),
       GoRoute(path: '/about',       builder: (c, s) => const ErrorBoundary(moduleName: 'About', child: AboutScreen())),

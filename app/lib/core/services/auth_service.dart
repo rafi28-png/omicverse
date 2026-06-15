@@ -2,6 +2,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../navigation/app_navigator.dart';
 
+/// Base URL for the live app — used in email redirect links.
+const String _appBaseUrl = 'https://rafi28-png.github.io/omicverse/';
+
 class AuthService {
   static SupabaseClient? get _sb {
     try {
@@ -32,10 +35,11 @@ class AuthService {
     }
   }
 
+  // ─── SIGN UP ────────────────────────────────────────────────────────────────
+
   /// Sign up with email and password.
-  /// Sends a real confirmation email via the configured SMTP (Gmail).
-  /// Returns the AuthResponse — caller should check [needsEmailVerification]
-  /// on the returned user to decide whether to show the "check your inbox" UI.
+  /// Sends a real confirmation email via Gmail SMTP.
+  /// Caller should check [needsEmailVerification] to show the "check inbox" UI.
   static Future<AuthResponse> signUp({
     required String email,
     required String password,
@@ -44,30 +48,57 @@ class AuthService {
   }) async {
     final client = _sb;
     if (client == null) {
-      throw const AuthException('Supabase connection is not initialized. Please configure it in settings.');
+      throw const AuthException('Supabase is not initialised. Please check your connection.');
     }
-
     return await client.auth.signUp(
       email: email,
       password: password,
-      // After the user clicks the confirmation link in their inbox,
-      // Supabase redirects them back to the live app.
-      emailRedirectTo: 'https://rafi28-png.github.io/omicverse/',
+      emailRedirectTo: _appBaseUrl,
       data: {
-        if (name != null) 'name': name,
-        if (institution != null) 'institution': institution,
+        if (name != null && name.isNotEmpty) 'name': name,
+        if (institution != null && institution.isNotEmpty) 'institution': institution,
       },
     );
   }
 
-  /// Returns true when a signup response has a user but the email is not
-  /// yet confirmed — i.e. the user must click the link in their inbox.
+  /// Returns true when the user exists but email is not yet confirmed.
   static bool needsEmailVerification(AuthResponse response) {
     final user = response.user;
     return user != null && user.emailConfirmedAt == null;
   }
 
+  /// Resend the email confirmation link.
+  static Future<void> resendConfirmationEmail(String email) async {
+    final client = _sb;
+    if (client == null) throw const AuthException('Supabase is not initialised.');
+    await client.auth.resend(
+      type: OtpType.signup,
+      email: email,
+      emailRedirectTo: _appBaseUrl,
+    );
+  }
 
+  // ─── PASSWORD RESET ─────────────────────────────────────────────────────────
+
+  /// Send a password-reset link to [email].
+  /// The link redirects back to the app at /reset-password.
+  static Future<void> sendPasswordResetEmail(String email) async {
+    final client = _sb;
+    if (client == null) throw const AuthException('Supabase is not initialised.');
+    await client.auth.resetPasswordForEmail(
+      email,
+      redirectTo: '${_appBaseUrl}reset-password',
+    );
+  }
+
+  /// Update the currently signed-in user's password (used after password reset).
+  static Future<void> updatePassword(String newPassword) async {
+    final client = _sb;
+    if (client == null) throw const AuthException('Supabase is not initialised.');
+    await client.auth.updateUser(UserAttributes(password: newPassword));
+  }
+
+  // ─── SIGN IN / OUT ─────────────────────────────────────────────────────────
 
   /// Sign in with email and password.
   static Future<AuthResponse> signIn({
@@ -76,7 +107,7 @@ class AuthService {
   }) async {
     final client = _sb;
     if (client == null) {
-      throw const AuthException('Supabase connection is not initialized. Please configure it in settings.');
+      throw const AuthException('Supabase is not initialised. Please check your connection.');
     }
     return await client.auth.signInWithPassword(
       email: email,
@@ -85,27 +116,16 @@ class AuthService {
   }
 
   /// Sign out.
-  static Future<void> signOut() async {
-    final client = _sb;
-    if (client == null) return;
-    await client.auth.signOut();
-  }
+  static Future<void> signOut() async => (await _sb?.auth.signOut());
 
-  /// Get current user.
-  static User? get currentUser {
-    final client = _sb;
-    if (client == null) return null;
-    return client.auth.currentUser;
-  }
+  // ─── USER INFO ──────────────────────────────────────────────────────────────
 
-  /// Check if logged in.
-  static bool get isLoggedIn {
-    final client = _sb;
-    if (client == null) return false;
-    return client.auth.currentUser != null;
-  }
+  static User?  get currentUser => _sb?.auth.currentUser;
+  static bool   get isLoggedIn  => currentUser != null;
 
-  /// Delete all user app data (GDPR) — uses auth.uid() internally in SQL.
+  // ─── ACCOUNT DELETION ──────────────────────────────────────────────────────
+
+  /// Delete all user app data (GDPR) — calls a server-side RPC.
   static Future<void> deleteAppData() async {
     final client = _sb;
     if (client == null) {

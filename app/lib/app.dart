@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/navigation/app_router.dart';
+import 'core/navigation/app_navigator.dart';
 import 'core/providers/app_providers.dart';
 import 'core/theme/colors.dart';
 import 'core/widgets/error_boundary.dart';
@@ -52,20 +53,45 @@ class _OmicVerseAppState extends ConsumerState<OmicVerseApp>
       try {
         _authSub = Supabase.instance.client.auth.onAuthStateChange
             .listen((data) {
-          // Reset to demo mode whenever there is no active session
-          // (covers sign-out, session expiry, and any auth failure).
-          final signedOut = data.event == AuthChangeEvent.signedOut ||
-              data.session == null;
+          if (!mounted) return;
 
-          if (signedOut && mounted) {
-            // Reset demo mode safely (NOT inside a redirect callback).
-            final isDemoMode = ref.read(isDemoModeProvider);
-            if (!isDemoMode) {
-              ref.read(isDemoModeProvider.notifier).state = true;
-              Hive.box<dynamic>('preferences').put('isDemoMode', true);
-            }
-            // Trigger router refresh so redirect fires and sends to /login.
-            ref.read(routerRefreshProvider).notify();
+          switch (data.event) {
+            // ── User confirmed their email OR signed in normally ─────────────
+            case AuthChangeEvent.signedIn:
+              if (data.session != null && mounted) {
+                // Enable live mode — home screen rebuilds with LIVE badge.
+                // login_screen.dart already handles navigation for explicit
+                // sign-in; this also handles auto-login after email confirmation
+                // (user lands at /home, state flips, badge updates instantly).
+                ref.read(isDemoModeProvider.notifier).state = false;
+                Hive.box<dynamic>('preferences').put('isDemoMode', false);
+                ref.read(routerRefreshProvider).notify();
+              }
+
+            // ── User clicked a password reset link ────────────────────────
+            case AuthChangeEvent.passwordRecovery:
+              final ctx = rootNavigatorKey.currentContext;
+              if (ctx != null && ctx.mounted) ctx.go('/reset-password');
+
+            // ── Session ended (sign-out, expiry) ───────────────────────────
+            case AuthChangeEvent.signedOut:
+              final isDemoMode = ref.read(isDemoModeProvider);
+              if (!isDemoMode) {
+                ref.read(isDemoModeProvider.notifier).state = true;
+                Hive.box<dynamic>('preferences').put('isDemoMode', true);
+              }
+              ref.read(routerRefreshProvider).notify();
+
+            default:
+              // Session == null means token expired / other failure.
+              if (data.session == null) {
+                final isDemoMode = ref.read(isDemoModeProvider);
+                if (!isDemoMode) {
+                  ref.read(isDemoModeProvider.notifier).state = true;
+                  Hive.box<dynamic>('preferences').put('isDemoMode', true);
+                  ref.read(routerRefreshProvider).notify();
+                }
+              }
           }
         });
       } catch (_) {
