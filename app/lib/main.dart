@@ -60,9 +60,17 @@ void main() {
       try {
         await Supabase.initialize(
           url: config.supabaseUrl,
-          publishableKey: config.supabaseAnonKey,
+          anonKey: config.supabaseAnonKey,
+        ).timeout(
+          const Duration(seconds: 8),
+          onTimeout: () {
+            debugPrint('Supabase init timed out — running in demo mode');
+            throw TimeoutException('Supabase init timeout');
+          },
         );
         supabaseInitialized = true;
+      } on TimeoutException {
+        debugPrint('Supabase timed out — continuing in demo mode');
       } catch (e) {
         debugPrint('Supabase initialization failed: $e');
       }
