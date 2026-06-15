@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 import '../../core/widgets/research_disclaimer.dart';
+import '../../core/widgets/onboarding_overlay.dart';
 import '../../core/providers/app_providers.dart';
 import '../../core/services/auth_service.dart';
 
@@ -37,17 +39,42 @@ final _modules = [
   const _ModuleInfo('Collaboration', 'Real-time project sharing', Icons.groups_outlined, '/collaboration', [kNeonPink, kNeonBlue]),
 ];
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _showOnboarding = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final prefs = Hive.box<dynamic>('preferences');
+    final seen = prefs.get('hasSeenOnboarding', defaultValue: false) as bool;
+    if (!seen) {
+      // Delay so the home screen renders first
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _showOnboarding = true);
+      });
+    }
+  }
+
+  void _dismissOnboarding() {
+    Hive.box<dynamic>('preferences').put('hasSeenOnboarding', true);
+    setState(() => _showOnboarding = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isDemoMode = ref.watch(isDemoModeProvider);
     final version = ref.watch(appVersionProvider);
     final width = MediaQuery.sizeOf(context).width;
     final crossCount = width > 1200 ? 4 : (width > 800 ? 3 : (width > 500 ? 2 : 1));
 
-    return Scaffold(
+    final scaffold = Scaffold(
       backgroundColor: kBackground,
       body: CustomScrollView(
         slivers: [
@@ -230,6 +257,14 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+
+    return Stack(
+      children: [
+        scaffold,
+        if (_showOnboarding)
+          OnboardingOverlay(onDone: _dismissOnboarding),
+      ],
     );
   }
 }

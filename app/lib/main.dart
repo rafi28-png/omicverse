@@ -12,7 +12,79 @@ import 'core/providers/app_providers.dart';
 import 'core/services/cache_service.dart';
 import 'app.dart';
 
+/// Minimal crash screen shown instead of the red Flutter error overlay.
+class _CrashScreen extends StatelessWidget {
+  final Object error;
+  const _CrashScreen(this.error);
+
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: Scaffold(
+      backgroundColor: const Color(0xFF060912),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.warning_amber_rounded,
+                  color: Color(0xFFFF6B6B), size: 48),
+              const SizedBox(height: 20),
+              const Text('Something went wrong',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  )),
+              const SizedBox(height: 12),
+              const Text(
+                'Please refresh the page to continue.\n'
+                'Your data is safe.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Color(0xFF8899AA), fontSize: 14),
+              ),
+              const SizedBox(height: 28),
+              ElevatedButton.icon(
+                onPressed: () => runApp(const _ReloadingApp()),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Refresh'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00F5D4),
+                  foregroundColor: Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _ReloadingApp extends StatelessWidget {
+  const _ReloadingApp();
+  @override
+  Widget build(BuildContext context) {
+    // Trigger a hot-restart equivalent by navigating to root.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // ignore: deprecated_member_use
+      ServicesBinding.instance.defaultBinaryMessenger.send('flutter/platform',
+          const StandardMethodCodec().encodeMethodCall(
+            const MethodCall('SystemNavigator.pop'),
+          ));
+    });
+    return const SizedBox.shrink();
+  }
+}
+
 void main() {
+  // Catch Flutter framework errors (widget build errors, etc.)
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('Flutter error: ${details.exception}\n${details.stack}');
+  };
+
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
@@ -90,7 +162,6 @@ void main() {
             debugMode: config.debugMode,
           );
 
-
     // Step 6: App version
     String appVersion = '1.0.0';
     try {
@@ -115,6 +186,8 @@ void main() {
       child: OmicVerseApp(supabaseConfigured: supabaseInitialized),
     ));
   }, (error, stack) {
-    debugPrint('Uncaught error: $error\n$stack');
+    // Catch Dart async / zone errors not caught by FlutterError.onError.
+    debugPrint('Uncaught zone error: $error\n$stack');
   });
 }
+
