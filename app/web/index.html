@@ -47,21 +47,45 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <!-- Loading screen: shown until Flutter renders on top of it -->
+  <style>
+    #fl-loading {
+      position: fixed; inset: 0;
+      background: #060912;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    #fl-loading .logo {
+      font-size: 28px; font-weight: 700; letter-spacing: 2px;
+      color: #00F5D4; font-family: sans-serif; margin-bottom: 32px;
+    }
+    #fl-loading .logo span { color: #5B8DEE; }
+    #fl-loading .ring {
+      width: 48px; height: 48px;
+      border: 3px solid #1a2535;
+      border-top-color: #00F5D4;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #fl-loading .hint {
+      margin-top: 24px; font-size: 13px;
+      color: #5a7a9a; font-family: sans-serif;
+    }
+  </style>
+  <div id="fl-loading">
+    <div class="logo">Omic<span>Verse</span></div>
+    <div class="ring"></div>
+    <div class="hint">Loading research suite…</div>
+  </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
   <!-- SPA routing fix: restore path stored by 404.html -->
   <script>
     (function() {
       var redirect = sessionStorage.redirect;
       delete sessionStorage.redirect;
       if (redirect && redirect !== location.href) {
-        // Push the original path back into history without a page reload.
         history.replaceState(null, null, redirect);
       }
     })();

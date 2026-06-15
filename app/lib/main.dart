@@ -64,7 +64,7 @@ void main() {
           url: config.supabaseUrl,
           publishableKey: config.supabaseAnonKey,
         ).timeout(
-          const Duration(seconds: 8),
+          const Duration(seconds: 3),
           onTimeout: () {
             debugPrint('Supabase init timed out — running in demo mode');
             throw TimeoutException('Supabase init timeout');
