@@ -40,7 +40,9 @@ jobs:
 
       - name: Build web
         run: |
-          flutter build web --release --base-href "/${{ github.event.repository.name }}/" \
+          flutter build web --release \
+            --web-renderer canvaskit \
+            --base-href "/${{ github.event.repository.name }}/" \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 
