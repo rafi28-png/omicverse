@@ -1,11 +1,10 @@
 {{flutter_js}}
 {{flutter_build_config}}
 
-// Custom bootstrap: skip service worker to avoid timeout issues on GitHub Pages.
-// The service worker cache can get stale and block new deployments from loading.
+// Skip service worker (causes 4000ms timeout on GitHub Pages static hosting).
+// Let Flutter auto-initialize with all other defaults unchanged.
 _flutter.loader.load({
-  onEntrypointLoaded: async function(engineInitializer) {
-    let appRunner = await engineInitializer.initializeEngine();
-    await appRunner.runApp();
+  serviceWorkerSettings: {
+    serviceWorkerVersion: null
   }
 });
