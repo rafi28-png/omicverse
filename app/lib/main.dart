@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -27,11 +28,12 @@ void main() {
     const defineKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
 
     // Step 2: Optionally load local .env (for local dev only).
-    // MUST use try-catch so web production builds don't crash when .env is absent.
-    try {
-      await dotenv.load(fileName: '.env', isOptional: true);
-    } catch (_) {
-      // Safe: .env is optional. Production web uses --dart-define only.
+    // Skipped on web — production web uses --dart-define, and attempting
+    // to fetch assets/.env on web causes a 404 that delays startup by ~500ms.
+    if (!kIsWeb) {
+      try {
+        await dotenv.load(fileName: '.env', isOptional: true);
+      } catch (_) {}
     }
 
     // Step 3: Build config — dart-define wins, .env is local dev fallback.
