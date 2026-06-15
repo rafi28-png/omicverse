@@ -119,17 +119,6 @@ class SettingsScreen extends ConsumerWidget {
                           thumbColor: const WidgetStatePropertyAll(kNeonTeal),
                         ),
                       ),
-                      const Divider(color: kBorder, height: 1, indent: 56),
-                      _SettingsTile(
-                        icon: Icons.accessibility_new,
-                        title: 'Reduce Motion',
-                        subtitle: 'Disable animations throughout the app',
-                        trailing: Switch(
-                          value: false,
-                          onChanged: (_) {},
-                          thumbColor: const WidgetStatePropertyAll(kNeonTeal),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -145,13 +134,19 @@ class SettingsScreen extends ConsumerWidget {
                     child: Column(
                       children: [
                         _SettingsTile(
+                          icon: Icons.person_outline,
+                          title: 'My Profile',
+                          subtitle: 'Edit your name, institution, and password',
+                          onTap: () => context.go('/profile'),
+                        ),
+                        const Divider(color: kBorder, height: 1, indent: 56),
+                        _SettingsTile(
                           icon: Icons.logout,
                           title: 'Sign Out',
                           subtitle: 'Return to demo mode and login screen',
                           onTap: () async {
                             await AuthService.signOut();
                             if (context.mounted) {
-                              // Reset demo mode before navigating
                               ref.read(isDemoModeProvider.notifier).state = true;
                               Hive.box<dynamic>('preferences').put('isDemoMode', true);
                               ref.read(routerRefreshProvider).notify();
