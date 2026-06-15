@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>OmicVerse</title>
+  <script>
+    // Single Page App routing fix for GitHub Pages.
+    // When a user lands on a deep URL (e.g. /omicverse/reset-password),
+    // GitHub Pages serves this 404.html instead of index.html.
+    // We store the full path in sessionStorage and redirect to the root
+    // so that index.html loads, then the script below restores the path.
+    var l = window.location;
+    sessionStorage.redirect = l.href;
+    l.replace(
+      l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+      l.pathname.split('/').slice(0, l.pathname.split('/').indexOf('omicverse') + 1).join('/') +
+      '/?p=' + encodeURIComponent(l.pathname.slice(1) + (l.search ? l.search : '') + l.hash)
+    );
+  </script>
+</head>
+<body>
+  <!-- Redirecting to OmicVerse... -->
+</body>
+</html>
