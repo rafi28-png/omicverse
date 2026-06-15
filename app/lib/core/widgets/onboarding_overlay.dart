@@ -182,14 +182,12 @@ class _OnboardingOverlayState extends State<OnboardingOverlay>
                       TextButton(
                         onPressed: () {
                           widget.onDone();
-                          // Navigate to login after overlay closes
-                          Future.microtask(
-                              () => context.go('/login'));
+                          if (context.mounted) context.go('/login');
                         },
                         child: RichText(
                           text: TextSpan(
                             style: tsBody().copyWith(fontSize: 13),
-                            children: [
+                            children: const [
                               TextSpan(
                                   text: 'Already have an account? ',
                                   style: TextStyle(color: kTextMuted)),
