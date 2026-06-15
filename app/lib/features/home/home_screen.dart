@@ -101,7 +101,37 @@ class HomeScreen extends ConsumerWidget {
                             ),
                             child: Text('LIVE', style: tsBadge().copyWith(color: kNeonTeal)),
                           ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
+                        // Profile avatar / login shortcut
+                        if (!isDemoMode) ...[
+                          GestureDetector(
+                            onTap: () => context.go('/profile'),
+                            child: Builder(builder: (ctx) {
+                              final user = AuthService.currentUser;
+                              final name = (user?.userMetadata?['name'] as String?) ?? user?.email ?? 'U';
+                              final initials = name.trim().split(' ')
+                                  .map((w) => w.isNotEmpty ? w[0] : '')
+                                  .take(2).join().toUpperCase();
+                              return Tooltip(
+                                message: 'My Profile',
+                                child: CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: kNeonTeal.withValues(alpha: 0.2),
+                                  child: Text(initials,
+                                    style: tsLabel().copyWith(color: kNeonTeal, fontSize: 12)),
+                                ),
+                              );
+                            }),
+                          ),
+                        ] else ...[
+                          Tooltip(
+                            message: 'Sign in',
+                            child: IconButton(
+                              icon: const Icon(Icons.login, color: kTextSecondary),
+                              onPressed: () => context.go('/login'),
+                            ),
+                          ),
+                        ],
                         IconButton(
                           icon: const Icon(Icons.settings_outlined, color: kTextSecondary),
                           onPressed: () => context.go('/settings'),

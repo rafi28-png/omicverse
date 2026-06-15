@@ -9,6 +9,7 @@ import '../../core/theme/typography.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/forgot_password_screen.dart';
 import '../../features/auth/reset_password_screen.dart';
+import '../../features/profile/profile_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/settings/about_screen.dart';
@@ -67,6 +68,7 @@ GoRouter createRouter(Ref ref) {
       GoRoute(path: '/login',            builder: (c, s) => const LoginScreen()),
       GoRoute(path: '/forgot-password',  builder: (c, s) => const ForgotPasswordScreen()),
       GoRoute(path: '/reset-password',   builder: (c, s) => const ResetPasswordScreen()),
+      GoRoute(path: '/profile',          builder: (c, s) => const ErrorBoundary(moduleName: 'Profile', child: ProfileScreen())),
       GoRoute(path: '/home',        builder: (c, s) => const ErrorBoundary(moduleName: 'Home', child: HomeScreen())),
       GoRoute(path: '/settings',    builder: (c, s) => const ErrorBoundary(moduleName: 'Settings', child: SettingsScreen())),
       GoRoute(path: '/about',       builder: (c, s) => const ErrorBoundary(moduleName: 'About', child: AboutScreen())),
