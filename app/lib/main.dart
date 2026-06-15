@@ -62,7 +62,7 @@ void main() {
       try {
         await Supabase.initialize(
           url: config.supabaseUrl,
-          anonKey: config.supabaseAnonKey,
+          publishableKey: config.supabaseAnonKey,
         ).timeout(
           const Duration(seconds: 8),
           onTimeout: () {
