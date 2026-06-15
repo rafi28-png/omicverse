@@ -1,8 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app_navigator.dart';
 import '../services/auth_service.dart';
 import '../providers/app_providers.dart';
@@ -31,43 +29,34 @@ import '../../features/multi_omics/multi_omics_screen.dart';
 import '../../features/collaboration/collaboration_screen.dart';
 import '../widgets/error_boundary.dart';
 
-/// Listens to Supabase auth state changes and notifies GoRouter to
-/// re-evaluate its redirect so sign-out / session-expiry automatically
-/// redirects back to /login.
-class _AuthChangeNotifier extends ChangeNotifier {
-  _AuthChangeNotifier() {
-    try {
-      _sub = Supabase.instance.client.auth.onAuthStateChange
-          .listen((_) => notifyListeners());
-    } catch (_) {
-      // Supabase not initialised (no config) — no-op.
-    }
-  }
-
-  dynamic _sub;
-
-  @override
-  void dispose() {
-    (_sub as dynamic)?.cancel();
-    super.dispose();
-  }
+/// A ChangeNotifier wired to GoRouter's [refreshListenable].
+/// Exposes a public [notify] method so [OmicVerseApp] can trigger
+/// router re-evaluation from outside (e.g. after auth state changes).
+class RouterRefreshNotifier extends ChangeNotifier {
+  /// Call this whenever the auth/demo-mode state changes.
+  void notify() => notifyListeners();
 }
 
+/// Singleton notifier — created once in [routerRefreshProvider].
+final routerRefreshProvider = Provider<RouterRefreshNotifier>((ref) {
+  return RouterRefreshNotifier();
+});
+
 GoRouter createRouter(Ref ref) {
+  final refreshNotifier = ref.read(routerRefreshProvider);
+
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/home',
-    refreshListenable: _AuthChangeNotifier(),
+    // Only read state here — NEVER mutate Riverpod/Hive inside redirect.
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
-      final isDemo = ref.read(isDemoModeProvider);
+      final isDemo    = ref.read(isDemoModeProvider);
       final isLoggedIn = AuthService.isLoggedIn;
 
-      // If live mode is on but no session exists, revert to demo mode.
-      // (Handles session expiry while the app is running.)
-      if (!isDemo && !isLoggedIn) {
-        ref.read(isDemoModeProvider.notifier).state = true;
-        Hive.box<dynamic>('preferences').put('isDemoMode', true);
-        if (state.matchedLocation != '/login') return '/login';
+      // If live mode is active but there is no valid session, block access.
+      if (!isDemo && !isLoggedIn && state.matchedLocation != '/login') {
+        return '/login';
       }
       return null;
     },

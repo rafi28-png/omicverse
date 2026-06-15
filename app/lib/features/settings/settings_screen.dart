@@ -8,6 +8,7 @@ import '../../core/widgets/glow_card.dart';
 import '../../core/widgets/neon_button.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/providers/app_providers.dart';
+import '../../core/navigation/app_router.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -91,14 +92,28 @@ class SettingsScreen extends ConsumerWidget {
                       _SettingsTile(
                         icon: Icons.science_outlined,
                         title: 'Demo Mode',
-                        subtitle: 'Use mock offline data instead of live APIs',
+                        subtitle: isDemoMode
+                            ? 'ON — using mock offline data'
+                            : 'OFF — using live APIs (logged in)',
                         trailing: Switch(
                           value: isDemoMode,
-                          onChanged: (val) {
-                            ref.read(isDemoModeProvider.notifier).state = val;
-                            Hive.box<dynamic>('preferences').put('isDemoMode', val);
-                            if (!val && !AuthService.isLoggedIn) {
-                              context.go('/login');
+                          onChanged: (wantsLiveMode) {
+                            if (wantsLiveMode) {
+                              // Turning ON demo mode (going from live → demo)
+                              ref.read(isDemoModeProvider.notifier).state = true;
+                              Hive.box<dynamic>('preferences').put('isDemoMode', true);
+                              ref.read(routerRefreshProvider).notify();
+                            } else {
+                              // Turning OFF demo mode (wants live mode)
+                              if (AuthService.isLoggedIn) {
+                                // Already logged in — enable live mode immediately
+                                ref.read(isDemoModeProvider.notifier).state = false;
+                                Hive.box<dynamic>('preferences').put('isDemoMode', false);
+                                ref.read(routerRefreshProvider).notify();
+                              } else {
+                                // NOT logged in — do NOT save false, just go to login
+                                context.go('/login');
+                              }
                             }
                           },
                           thumbColor: const WidgetStatePropertyAll(kNeonTeal),
@@ -132,10 +147,16 @@ class SettingsScreen extends ConsumerWidget {
                         _SettingsTile(
                           icon: Icons.logout,
                           title: 'Sign Out',
-                          subtitle: 'Return to login screen',
+                          subtitle: 'Return to demo mode and login screen',
                           onTap: () async {
                             await AuthService.signOut();
-                            if (context.mounted) context.go('/login');
+                            if (context.mounted) {
+                              // Reset demo mode before navigating
+                              ref.read(isDemoModeProvider.notifier).state = true;
+                              Hive.box<dynamic>('preferences').put('isDemoMode', true);
+                              ref.read(routerRefreshProvider).notify();
+                              context.go('/login');
+                            }
                           },
                         ),
                         const Divider(color: kBorder, height: 1, indent: 56),
