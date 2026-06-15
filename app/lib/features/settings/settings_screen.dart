@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import '../../core/utils/safe_hive.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 import '../../core/widgets/glow_card.dart';
@@ -101,14 +101,14 @@ class SettingsScreen extends ConsumerWidget {
                             if (wantsLiveMode) {
                               // Turning ON demo mode (going from live → demo)
                               ref.read(isDemoModeProvider.notifier).state = true;
-                              Hive.box<dynamic>('preferences').put('isDemoMode', true);
+                              safeWrite('preferences', 'isDemoMode', true);
                               ref.read(routerRefreshProvider).notify();
                             } else {
                               // Turning OFF demo mode (wants live mode)
                               if (AuthService.isLoggedIn) {
                                 // Already logged in — enable live mode immediately
                                 ref.read(isDemoModeProvider.notifier).state = false;
-                                Hive.box<dynamic>('preferences').put('isDemoMode', false);
+                                safeWrite('preferences', 'isDemoMode', false);
                                 ref.read(routerRefreshProvider).notify();
                               } else {
                                 // NOT logged in — do NOT save false, just go to login
@@ -148,7 +148,7 @@ class SettingsScreen extends ConsumerWidget {
                             await AuthService.signOut();
                             if (context.mounted) {
                               ref.read(isDemoModeProvider.notifier).state = true;
-                              Hive.box<dynamic>('preferences').put('isDemoMode', true);
+                              safeWrite('preferences', 'isDemoMode', true);
                               ref.read(routerRefreshProvider).notify();
                               context.go('/login');
                             }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import '../../core/utils/safe_hive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
@@ -97,7 +97,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     await AuthService.signOut();
     if (mounted) {
       ref.read(isDemoModeProvider.notifier).state = true;
-      Hive.box<dynamic>('preferences').put('isDemoMode', true);
+      safeWrite('preferences', 'isDemoMode', true);
       ref.read(routerRefreshProvider).notify();
       context.go('/login');
     }

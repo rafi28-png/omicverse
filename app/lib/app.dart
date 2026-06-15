@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/utils/safe_hive.dart';
 import 'core/navigation/app_router.dart';
 import 'core/navigation/app_navigator.dart';
 import 'core/providers/app_providers.dart';
@@ -64,7 +64,7 @@ class _OmicVerseAppState extends ConsumerState<OmicVerseApp>
                 // sign-in; this also handles auto-login after email confirmation
                 // (user lands at /home, state flips, badge updates instantly).
                 ref.read(isDemoModeProvider.notifier).state = false;
-                Hive.box<dynamic>('preferences').put('isDemoMode', false);
+                safeWrite('preferences', 'isDemoMode', false);
                 ref.read(routerRefreshProvider).notify();
               }
 
@@ -78,7 +78,7 @@ class _OmicVerseAppState extends ConsumerState<OmicVerseApp>
               final isDemoMode = ref.read(isDemoModeProvider);
               if (!isDemoMode) {
                 ref.read(isDemoModeProvider.notifier).state = true;
-                Hive.box<dynamic>('preferences').put('isDemoMode', true);
+                safeWrite('preferences', 'isDemoMode', true);
               }
               ref.read(routerRefreshProvider).notify();
 
@@ -88,7 +88,7 @@ class _OmicVerseAppState extends ConsumerState<OmicVerseApp>
                 final isDemoMode = ref.read(isDemoModeProvider);
                 if (!isDemoMode) {
                   ref.read(isDemoModeProvider.notifier).state = true;
-                  Hive.box<dynamic>('preferences').put('isDemoMode', true);
+                  safeWrite('preferences', 'isDemoMode', true);
                   ref.read(routerRefreshProvider).notify();
                 }
               }
@@ -110,7 +110,7 @@ class _OmicVerseAppState extends ConsumerState<OmicVerseApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.detached) {
-      Hive.close();
+      safeCloseHive();
     }
   }
 

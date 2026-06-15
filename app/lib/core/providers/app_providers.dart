@@ -4,7 +4,7 @@
 // main.dart, app.dart, and any screen can import this safely.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import '../utils/safe_hive.dart';
 import '../config/app_config.dart';
 
 /// App version — overridden in main.dart from PackageInfo.
@@ -18,10 +18,5 @@ final appConfigProvider = Provider<AppConfig>((ref) {
 /// Demo mode preference — true = offline bundled data, no network calls.
 /// Persisted via Hive in Phase 4. For now, defaults based on config.
 final isDemoModeProvider = StateProvider<bool>((ref) {
-  try {
-    final box = Hive.box<dynamic>('preferences');
-    return box.get('isDemoMode', defaultValue: true) as bool;
-  } catch (_) {
-    return true;
-  }
+  return safeRead<bool>('preferences', 'isDemoMode', true);
 });

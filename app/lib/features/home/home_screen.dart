@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import '../../core/utils/safe_hive.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 import '../../core/widgets/research_disclaimer.dart';
@@ -52,8 +52,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    final prefs = Hive.box<dynamic>('preferences');
-    final seen = prefs.get('hasSeenOnboarding', defaultValue: false) as bool;
+    final seen = safeRead<bool>('preferences', 'hasSeenOnboarding', false);
     if (!seen) {
       // Delay so the home screen renders first
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -63,7 +62,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _dismissOnboarding() {
-    Hive.box<dynamic>('preferences').put('hasSeenOnboarding', true);
+    safeWrite('preferences', 'hasSeenOnboarding', true);
     setState(() => _showOnboarding = false);
   }
 

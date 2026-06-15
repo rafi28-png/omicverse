@@ -11,6 +11,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'core/config/app_config.dart';
 import 'core/providers/app_providers.dart';
 import 'core/services/cache_service.dart';
+import 'core/utils/safe_hive.dart';
 import 'app.dart';
 
 void main() {
@@ -63,14 +64,23 @@ void main() {
         dotenvDebug: dotenv.maybeGet('DEBUG_MODE'),
       );
 
-      // Step 4: Initialize Hive
+      // Step 4: Initialize Hive — each step independent so one failure
+      // doesn't prevent the rest from working.
+      try { await Hive.initFlutter(); } catch (e) {
+        debugPrint('Hive.initFlutter failed: $e');
+      }
       try {
-        await Hive.initFlutter();
-        await Hive.openBox<dynamic>('cache');
-        await Hive.openBox<dynamic>('preferences');
-        await CacheService.init();
+        if (!Hive.isBoxOpen('cache')) await Hive.openBox<dynamic>('cache');
       } catch (e) {
-        debugPrint('Hive init failed (non-fatal): $e');
+        debugPrint('Hive openBox cache failed: $e');
+      }
+      try {
+        if (!Hive.isBoxOpen('preferences')) await Hive.openBox<dynamic>('preferences');
+      } catch (e) {
+        debugPrint('Hive openBox preferences failed: $e');
+      }
+      try { await CacheService.init(); } catch (e) {
+        debugPrint('CacheService.init failed: $e');
       }
 
       // Step 5: Initialize Supabase with safe timeout
@@ -103,19 +113,16 @@ void main() {
 
       // Step 5b: Guard demo-mode state
       try {
-        if (Hive.isBoxOpen('preferences')) {
-          final prefBox = Hive.box<dynamic>('preferences');
-          final storedDemoMode = prefBox.get('isDemoMode', defaultValue: true) as bool;
-          if (!storedDemoMode) {
-            bool hasSession = false;
-            if (supabaseOk) {
-              try {
-                hasSession = Supabase.instance.client.auth.currentSession != null;
-              } catch (_) {}
-            }
-            if (!hasSession) {
-              prefBox.put('isDemoMode', true);
-            }
+        final storedDemoMode = safeRead<bool>('preferences', 'isDemoMode', true);
+        if (!storedDemoMode) {
+          bool hasSession = false;
+          if (supabaseOk) {
+            try {
+              hasSession = Supabase.instance.client.auth.currentSession != null;
+            } catch (_) {}
+          }
+          if (!hasSession) {
+            safeWrite('preferences', 'isDemoMode', true);
           }
         }
       } catch (e) {

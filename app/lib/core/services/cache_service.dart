@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../utils/safe_hive.dart';
 
 // FIX NEW-15: increment this when cache data structure changes.
 const int kCacheSchemaVersion = 1;
@@ -19,18 +20,19 @@ class CacheEntry {
 class CacheService {
   static const int maxEntries = 200;
   static final _mem = <String, CacheEntry>{};
-  static late Box<dynamic> _hive;
-  static late Box<dynamic> _prefs;
+  static Box<dynamic>? _hive;
+  static Box<dynamic>? _prefs;
 
   static Future<void> init() async {
-    _hive = Hive.box<dynamic>('cache');
-    _prefs = Hive.box<dynamic>('preferences');
+    _hive = safeBox('cache');
+    _prefs = safeBox('preferences');
+    if (_hive == null || _prefs == null) return;
 
     // FIX NEW-15: clear cache if schema version changed
-    final storedVersion = _prefs.get('cacheSchemaVersion', defaultValue: 0) as int;
+    final storedVersion = _prefs!.get('cacheSchemaVersion', defaultValue: 0) as int;
     if (storedVersion < kCacheSchemaVersion) {
-      await _hive.clear();
-      await _prefs.put('cacheSchemaVersion', kCacheSchemaVersion);
+      await _hive!.clear();
+      await _prefs!.put('cacheSchemaVersion', kCacheSchemaVersion);
     } else {
       await _cleanExpired();
     }
@@ -43,12 +45,14 @@ class CacheService {
     final k = _key(svc, ep, params);
     final mem = _mem[k];
     if (mem != null && !mem.isExpired) return mem.data;
-    final raw = _hive.get(k);
+    final h = _hive;
+    if (h == null) return null;
+    final raw = h.get(k);
     if (raw != null) {
       try {
         final e = CacheEntry.fromJson(Map<String, dynamic>.from(jsonDecode(raw as String) as Map));
         if (!e.isExpired) { _mem[k] = e; return e.data; }
-      } catch (_) { await _hive.delete(k); }
+      } catch (_) { await h.delete(k); }
     }
     return null;
   }
@@ -61,16 +65,18 @@ class CacheService {
     final e = CacheEntry(data: data, expiresAt: DateTime.now().add(ttl));
     _mem[k] = e;
     if (_mem.length > maxEntries) _mem.remove(_mem.keys.first);
-    await _hive.put(k, jsonEncode(e.toJson()));
+    await _hive?.put(k, jsonEncode(e.toJson()));
   }
 
-  static Future<void> clearAll() async { _mem.clear(); await _hive.clear(); }
+  static Future<void> clearAll() async { _mem.clear(); await _hive?.clear(); }
 
   static Future<void> _cleanExpired() async {
+    final h = _hive;
+    if (h == null) return;
     final del = <String>[];
-    for (final k in _hive.keys) {
+    for (final k in h.keys) {
       try {
-        final raw = _hive.get(k);
+        final raw = h.get(k);
         if (raw != null) {
           final e = CacheEntry.fromJson(
             Map<String, dynamic>.from(jsonDecode(raw as String) as Map));
@@ -79,7 +85,7 @@ class CacheService {
       } catch (_) { del.add(k.toString()); }
     }
     for (final k in del) {
-      await _hive.delete(k);
+      await h.delete(k);
     }
   }
 }
