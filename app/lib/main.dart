@@ -56,23 +56,34 @@ void main() {
     await Hive.openBox<dynamic>('preferences');
     await CacheService.init();
 
-    // Step 5: Initialize Supabase only if config is present
+    // Step 5: Initialize Supabase only if config is present.
+    // Uses a Completer to race init vs timeout — avoids orphaned futures
+    // that .timeout() creates (which cause uncaught zone errors on web).
     bool supabaseInitialized = false;
     if (config.isSupabaseConfigured) {
       try {
-        await Supabase.initialize(
+        final completer = Completer<bool>();
+
+        // Start Supabase init — complete true on success, false on error.
+        Supabase.initialize(
           url: config.supabaseUrl,
           publishableKey: config.supabaseAnonKey,
-        ).timeout(
-          const Duration(seconds: 3),
-          onTimeout: () {
+        ).then((_) {
+          if (!completer.isCompleted) completer.complete(true);
+        }).catchError((Object e) {
+          debugPrint('Supabase init error: $e');
+          if (!completer.isCompleted) completer.complete(false);
+        });
+
+        // 3-second deadline — if init hasn't finished, start in demo mode.
+        Future<void>.delayed(const Duration(seconds: 3), () {
+          if (!completer.isCompleted) {
             debugPrint('Supabase init timed out — running in demo mode');
-            throw TimeoutException('Supabase init timeout');
-          },
-        );
-        supabaseInitialized = true;
-      } on TimeoutException {
-        debugPrint('Supabase timed out — continuing in demo mode');
+            completer.complete(false);
+          }
+        });
+
+        supabaseInitialized = await completer.future;
       } catch (e) {
         debugPrint('Supabase initialization failed: $e');
       }
