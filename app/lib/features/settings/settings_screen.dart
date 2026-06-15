@@ -175,32 +175,88 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _confirmDelete(BuildContext context) {
+    final confirmCtrl = TextEditingController();
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: kSurface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Delete All Data?', style: tsTitle(kNeonRed)),
-        content: Text(
-          'This will permanently delete all your projects, bookmarks, analyses, '
-          'and account data. This action cannot be undone.',
-          style: tsBody(),
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: kSurface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: kNeonRed.withValues(alpha: 0.4)),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: kNeonRed, size: 22),
+              const SizedBox(width: 10),
+              Text('Delete All Data?', style: tsTitle(kNeonRed)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'This will permanently delete all your projects, bookmarks, '
+                'analyses, and account data from the server. '
+                'This cannot be undone.',
+                style: tsBody(),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Type DELETE to confirm:',
+                style: tsBody().copyWith(color: kTextMuted, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: confirmCtrl,
+                autofocus: true,
+                style: tsBody().copyWith(color: kNeonRed, letterSpacing: 2),
+                decoration: InputDecoration(
+                  hintText: 'DELETE',
+                  hintStyle: tsBody().copyWith(color: kTextMuted),
+                  filled: true,
+                  fillColor: kNeonRed.withValues(alpha: 0.06),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: kNeonRed.withValues(alpha: 0.4)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: kNeonRed.withValues(alpha: 0.4)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: kNeonRed, width: 1.5),
+                  ),
+                ),
+                onChanged: (_) => setDialogState(() {}),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                confirmCtrl.dispose();
+                Navigator.pop(ctx);
+              },
+              child: Text('Cancel', style: tsBody().copyWith(color: kTextMuted)),
+            ),
+            NeonButton(
+              label: 'Delete Everything',
+              icon: Icons.delete_forever,
+              color: kNeonRed,
+              onPressed: confirmCtrl.text == 'DELETE'
+                  ? () {
+                      confirmCtrl.dispose();
+                      Navigator.pop(ctx);
+                      AuthService.deleteAppData();
+                    }
+                  : null,
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: tsBody().copyWith(color: kTextMuted)),
-          ),
-          NeonButton(
-            label: 'Delete Everything',
-            icon: Icons.delete_forever,
-            color: kNeonRed,
-            onPressed: () {
-              Navigator.pop(ctx);
-              AuthService.deleteAppData();
-            },
-          ),
-        ],
       ),
     );
   }
