@@ -248,70 +248,75 @@ class _ModuleCardState extends State<_ModuleCard> {
   @override
   Widget build(BuildContext context) {
     final m = widget.module;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      child: GestureDetector(
-        onTap: () => context.go(m.route),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: _hovering ? kSurfaceRaised : kSurface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: _hovering ? m.gradient.first.withValues(alpha: 0.5) : kBorder,
-              width: _hovering ? 1.5 : 1,
+    return Semantics(
+      button: true,
+      label: '${m.title} module — ${m.subtitle}',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovering = true),
+        onExit:  (_) => setState(() => _hovering = false),
+        child: GestureDetector(
+          onTap: () => context.go(m.route),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: _hovering ? kSurfaceRaised : kSurface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _hovering ? m.gradient.first.withValues(alpha: 0.5) : kBorder,
+                width: _hovering ? 1.5 : 1,
+              ),
+              boxShadow: _hovering
+                  ? [BoxShadow(color: m.gradient.first.withValues(alpha: 0.15), blurRadius: 24)]
+                  : [depthShadow()],
             ),
-            boxShadow: _hovering
-                ? [BoxShadow(color: m.gradient.first.withValues(alpha: 0.15), blurRadius: 24)]
-                : [depthShadow()],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 36, height: 36,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      gradient: LinearGradient(
-                        colors: m.gradient,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36, height: 36,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        gradient: LinearGradient(
+                          colors: m.gradient,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: _hovering ? [glowShadow(m.gradient.first, r: 12)] : [],
                       ),
-                      boxShadow: _hovering ? [glowShadow(m.gradient.first, r: 12)] : [],
+                      child: Icon(m.icon, color: kVoid, size: 18),
                     ),
-                    child: Icon(m.icon, color: kVoid, size: 18),
-                  ),
-                  const Spacer(),
-                  AnimatedOpacity(
-                    opacity: _hovering ? 1 : 0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(Icons.arrow_forward_rounded,
-                        color: m.gradient.first, size: 18),
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(m.title,
-                      style: tsBody().copyWith(
-                          fontFamily: 'Orbitron',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: _hovering ? m.gradient.first : kTextPrimary)),
-                  const SizedBox(height: 4),
-                  Text(m.subtitle,
-                      style: tsBody().copyWith(fontSize: 11, color: kTextMuted),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ],
+                    const Spacer(),
+                    AnimatedOpacity(
+                      opacity: _hovering ? 1 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(Icons.arrow_forward_rounded,
+                          color: m.gradient.first, size: 18),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(m.title,
+                        style: tsBody().copyWith(
+                            fontFamily: 'Orbitron',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: _hovering ? m.gradient.first : kTextPrimary)),
+                    const SizedBox(height: 4),
+                    Text(m.subtitle,
+                        style: tsBody().copyWith(fontSize: 11, color: kTextMuted),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
