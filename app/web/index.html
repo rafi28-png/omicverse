@@ -98,6 +98,21 @@
       });
     }
   </script>
+  <!-- Remove loading screen once Flutter renders -->
+  <script>
+    var obs = new MutationObserver(function() {
+      if (document.querySelector('flutter-view, flt-glass-pane')) {
+        var el = document.getElementById('fl-loading');
+        if (el) el.remove();
+        obs.disconnect();
+      }
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+    setTimeout(function() {
+      var el = document.getElementById('fl-loading');
+      if (el) el.remove();
+    }, 10000);
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
