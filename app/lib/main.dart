@@ -40,8 +40,10 @@ void main() {
 
     try {
       // Step 1: Read --dart-define values
+      debugPrint('[INIT] Step 1: Reading dart-define values...');
       const defineUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: '');
       const defineKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
+      debugPrint('[INIT] Step 1 done. URL empty=${defineUrl.isEmpty}, KEY empty=${defineKey.isEmpty}');
 
       // Step 2: Load .env (local dev only, skip on web)
       if (!kIsWeb) {
@@ -51,6 +53,7 @@ void main() {
       }
 
       // Step 3: Build config
+      debugPrint('[INIT] Step 3: Building config...');
       final config = AppConfig.fromEnvironment(
         dartDefineUrl: defineUrl,
         dartDefineKey: defineKey,
@@ -63,9 +66,10 @@ void main() {
         dotenvCacheTtl: dotenv.maybeGet('CACHE_TTL_HOURS'),
         dotenvDebug: dotenv.maybeGet('DEBUG_MODE'),
       );
+      debugPrint('[INIT] Step 3 done. isSupabaseConfigured=${config.isSupabaseConfigured}');
 
-      // Step 4: Initialize Hive — each step independent so one failure
-      // doesn't prevent the rest from working.
+      // Step 4: Initialize Hive
+      debugPrint('[INIT] Step 4: Hive init...');
       try { await Hive.initFlutter(); } catch (e) {
         debugPrint('Hive.initFlutter failed: $e');
       }
@@ -82,8 +86,10 @@ void main() {
       try { await CacheService.init(); } catch (e) {
         debugPrint('CacheService.init failed: $e');
       }
+      debugPrint('[INIT] Step 4 done.');
 
-      // Step 5: Initialize Supabase with safe timeout
+      // Step 5: Initialize Supabase
+      debugPrint('[INIT] Step 5: Supabase init...');
       if (config.isSupabaseConfigured) {
         try {
           final completer = Completer<bool>();
@@ -110,8 +116,10 @@ void main() {
           debugPrint('Supabase initialization failed: $e');
         }
       }
+      debugPrint('[INIT] Step 5 done. supabaseOk=$supabaseOk');
 
       // Step 5b: Guard demo-mode state
+      debugPrint('[INIT] Step 5b: Demo mode guard...');
       try {
         final storedDemoMode = safeRead<bool>('preferences', 'isDemoMode', true);
         if (!storedDemoMode) {
