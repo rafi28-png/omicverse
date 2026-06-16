@@ -90,7 +90,7 @@ To enable user sign-ins, project saving, and real-time collaboration, you can co
 
 ## 🧪 Testing
 
-OmicVerse features a robust, self-contained test suite consisting of **189 unit and widget tests** covering contrast ratio metrics, VCF/CSV parsers, genetics algorithms, and UI transitions.
+OmicVerse features a robust, self-contained test suite consisting of **196 unit and widget tests** covering contrast ratio metrics, VCF/CSV parsers, genetics algorithms, and UI transitions.
 
 Run the test suite locally with:
 ```bash
@@ -119,3 +119,20 @@ OmicVerse accesses public research infrastructure. We express our gratitude to t
 ## 📄 License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## 📖 Citation
+
+If you use OmicVerse in your research, please cite:
+
+```bibtex
+@software{rahman2025omicverse,
+  author = {Rahman, Md Rafiur},
+  title = {OmicVerse: A Browser-Based Multi-Omics Research Platform},
+  year = {2025},
+  url = {https://github.com/rafi28-png/omicverse}
+}
+```
+
+See also [CITATION.cff](CITATION.cff) for machine-readable citation metadata.
