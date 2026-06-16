@@ -57,14 +57,14 @@ void main() {
       final config = AppConfig.fromEnvironment(
         dartDefineUrl: defineUrl,
         dartDefineKey: defineKey,
-        dotenvUrl: dotenv.maybeGet('SUPABASE_URL'),
-        dotenvKey: dotenv.maybeGet('SUPABASE_ANON_KEY'),
-        dotenvAppName: dotenv.maybeGet('APP_NAME'),
-        dotenvAppVersion: dotenv.maybeGet('APP_VERSION'),
-        dotenvMaxVcf: dotenv.maybeGet('MAX_VCF_VARIANTS'),
-        dotenvBatchSize: dotenv.maybeGet('ANNOTATION_BATCH_SIZE'),
-        dotenvCacheTtl: dotenv.maybeGet('CACHE_TTL_HOURS'),
-        dotenvDebug: dotenv.maybeGet('DEBUG_MODE'),
+        dotenvUrl: kIsWeb ? null : dotenv.maybeGet('SUPABASE_URL'),
+        dotenvKey: kIsWeb ? null : dotenv.maybeGet('SUPABASE_ANON_KEY'),
+        dotenvAppName: kIsWeb ? null : dotenv.maybeGet('APP_NAME'),
+        dotenvAppVersion: kIsWeb ? null : dotenv.maybeGet('APP_VERSION'),
+        dotenvMaxVcf: kIsWeb ? null : dotenv.maybeGet('MAX_VCF_VARIANTS'),
+        dotenvBatchSize: kIsWeb ? null : dotenv.maybeGet('ANNOTATION_BATCH_SIZE'),
+        dotenvCacheTtl: kIsWeb ? null : dotenv.maybeGet('CACHE_TTL_HOURS'),
+        dotenvDebug: kIsWeb ? null : dotenv.maybeGet('DEBUG_MODE'),
       );
       debugPrint('[INIT] Step 3 done. isSupabaseConfigured=${config.isSupabaseConfigured}');
 
