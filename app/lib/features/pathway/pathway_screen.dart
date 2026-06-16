@@ -43,24 +43,11 @@ class _PathwayScreenState extends ConsumerState<PathwayScreen> {
     setState(() => _state = _ScreenState.searching);
 
     try {
-      final isDemoMode = ref.read(isDemoModeProvider);
+      // Always try real API — services fall back to demo on error
       List<PathwayInfo> results;
-
-      if (isDemoMode || _searchMode == 'gene') {
-        if (_searchMode == 'gene') {
-          results = isDemoMode
-            ? PathwayInfo.demoPathways().where((p) =>
-                p.genes.any((g) => g.toLowerCase() == q.toLowerCase())).toList()
-            : await PathwayService.pathwaysForGene(q);
-
-          // Also fetch interactions
-          _interactions = await PathwayService.getInteractions(q);
-        } else {
-          results = PathwayInfo.demoPathways().where((p) =>
-            p.name.toLowerCase().contains(q.toLowerCase()) ||
-            p.description.toLowerCase().contains(q.toLowerCase())
-          ).toList();
-        }
+      if (_searchMode == 'gene') {
+        results = await PathwayService.pathwaysForGene(q);
+        _interactions = await PathwayService.getInteractions(q);
       } else {
         results = await PathwayService.searchPathways(q);
       }

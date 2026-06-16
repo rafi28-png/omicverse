@@ -37,17 +37,10 @@ class _DrugScreenState extends ConsumerState<DrugScreen> {
     if (q.isEmpty) return;
     setState(() => _state = _ScreenState.searching);
     try {
-      final isDemoMode = ref.read(isDemoModeProvider);
-      List<Drug> results;
-      if (isDemoMode) {
-        results = _mode == _SearchMode.target
-          ? Drug.demoDrugs().where((d) => d.targetGene?.toLowerCase() == q.toLowerCase()).toList()
-          : Drug.demoDrugs().where((d) => d.name.toLowerCase().contains(q.toLowerCase())).toList();
-      } else {
-        results = _mode == _SearchMode.target
-          ? await DrugService.searchByTarget(q)
-          : await DrugService.searchByName(q);
-      }
+      // Always try real API — service falls back to demo on error
+      final results = _mode == _SearchMode.target
+        ? await DrugService.searchByTarget(q)
+        : await DrugService.searchByName(q);
       setState(() {
         _drugs = results;
         _state = results.isEmpty ? _ScreenState.idle : _ScreenState.results;

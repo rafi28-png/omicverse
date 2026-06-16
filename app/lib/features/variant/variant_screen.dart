@@ -54,10 +54,9 @@ class _VariantScreenState extends ConsumerState<VariantScreen> {
 
       setState(() => _state = _ScreenState.annotating);
 
-      // Only annotate first 50 variants for demo speed
       final toAnnotate = result.variants.take(50).toList();
-      final isDemoMode = ref.read(isDemoModeProvider);
-      _annotated = await VariantAnnotationService.annotate(toAnnotate, isDemoMode: isDemoMode);
+      // Always try real gnomAD/VEP — service falls back to demo on error
+      _annotated = await VariantAnnotationService.annotate(toAnnotate, isDemoMode: false);
 
       setState(() => _state = _ScreenState.results);
     } catch (e) {
@@ -97,8 +96,8 @@ class _VariantScreenState extends ConsumerState<VariantScreen> {
 
       setState(() => _state = _ScreenState.annotating);
       final toAnnotate = result.variants.take(50).toList();
-      final isDemoMode = ref.read(isDemoModeProvider);
-      _annotated = await VariantAnnotationService.annotate(toAnnotate, isDemoMode: isDemoMode);
+      // Always try real gnomAD/VEP — service falls back to demo on error
+      _annotated = await VariantAnnotationService.annotate(toAnnotate, isDemoMode: false);
 
       setState(() => _state = _ScreenState.results);
     } catch (e) {

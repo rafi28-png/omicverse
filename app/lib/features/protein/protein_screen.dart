@@ -41,13 +41,8 @@ class _ProteinScreenState extends ConsumerState<ProteinScreen> {
 
     setState(() => _state = _ScreenState.searching);
     try {
-      final isDemoMode = ref.read(isDemoModeProvider);
-      final results = isDemoMode
-        ? ProteinInfo.demoProteins().where((p) =>
-            p.gene.toLowerCase().contains(q.toLowerCase()) ||
-            p.name.toLowerCase().contains(q.toLowerCase())
-          ).toList()
-        : await ProteinService.searchProtein(q);
+      // Always try real API — service falls back to demo on error
+      final results = await ProteinService.searchProtein(q);
 
       setState(() {
         _results = results;
