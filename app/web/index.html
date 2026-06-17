@@ -55,6 +55,7 @@
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       z-index: 9999;
+      transition: opacity 0.4s ease-out;
     }
     #fl-loading .logo {
       font-size: 28px; font-weight: 700; letter-spacing: 2px;
@@ -100,18 +101,22 @@
   </script>
   <!-- Remove loading screen once Flutter renders -->
   <script>
+    function fadeOutLoading() {
+      var el = document.getElementById('fl-loading');
+      if (!el) return;
+      el.style.opacity = '0';
+      setTimeout(function() { el.remove(); }, 500);
+    }
     var obs = new MutationObserver(function() {
       if (document.querySelector('flutter-view, flt-glass-pane')) {
-        var el = document.getElementById('fl-loading');
-        if (el) el.remove();
         obs.disconnect();
+        // Give Flutter 800ms to render first frame before fading
+        setTimeout(fadeOutLoading, 800);
       }
     });
     obs.observe(document.body, { childList: true, subtree: true });
-    setTimeout(function() {
-      var el = document.getElementById('fl-loading');
-      if (el) el.remove();
-    }, 10000);
+    // Failsafe: remove after 15s no matter what
+    setTimeout(fadeOutLoading, 15000);
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
