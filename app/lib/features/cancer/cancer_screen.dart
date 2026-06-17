@@ -36,7 +36,6 @@ class _CancerScreenState extends ConsumerState<CancerScreen> {
     if (gene.isEmpty) return;
     setState(() => _state = _ScreenState.searching);
     try {
-      final isDemoMode = ref.read(isDemoModeProvider);
       final mutations = await CancerService.getMutations(gene);
       setState(() {
         _mutations = mutations;

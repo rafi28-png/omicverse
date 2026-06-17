@@ -37,7 +37,6 @@ class _RegulatoryScreenState extends ConsumerState<RegulatoryScreen> {
     if (q.isEmpty) return;
     setState(() => _state = _ScreenState.searching);
     try {
-      final isDemoMode = ref.read(isDemoModeProvider);
       _elements = await RegulatoryService.searchByGene(q);
       _tfs = await RegulatoryService.getTFsForGene(q);
       setState(() => _state = _elements.isEmpty && _tfs.isEmpty

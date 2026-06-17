@@ -35,7 +35,6 @@ class _SplicingScreenState extends ConsumerState<SplicingScreen> {
     if (gene.isEmpty) return;
     setState(() => _state = _ScreenState.searching);
     try {
-      final isDemoMode = ref.read(isDemoModeProvider);
       _isoforms = await SplicingService.getIsoforms(gene);
       _events = await SplicingService.getSplicingEvents(gene);
       setState(() => _state = (_isoforms.isEmpty && _events.isEmpty)

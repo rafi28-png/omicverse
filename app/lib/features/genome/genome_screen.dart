@@ -42,7 +42,6 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
     setState(() => _state = _ScreenState.searching);
 
     try {
-      final isDemoMode = ref.read(isDemoModeProvider);
       List<GeneInfo> results;
       results = await GenomeService.searchGene(q);
 

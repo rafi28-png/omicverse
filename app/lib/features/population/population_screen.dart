@@ -46,7 +46,6 @@ class _PopulationScreenState extends ConsumerState<PopulationScreen> {
 
     setState(() => _state = _ScreenState.searching);
     try {
-      final isDemoMode = ref.read(isDemoModeProvider);
       PopulationVariant? result;
       result = await PopulationService.queryVariant(
         chromosome: chr, position: pos, reference: refAllele, alternate: altAllele);

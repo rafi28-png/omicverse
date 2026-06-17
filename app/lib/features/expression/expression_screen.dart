@@ -203,7 +203,7 @@ class _ExpressionScreenState extends ConsumerState<ExpressionScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: kNeonTeal.withOpacity(0.15),
+                        color: kNeonTeal.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text('54 tissues · Real data', style: tsLabel().copyWith(color: kNeonTeal, fontSize: 10)),

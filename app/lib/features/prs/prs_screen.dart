@@ -35,7 +35,6 @@ class _PrsScreenState extends ConsumerState<PrsScreen> {
     if (q.isEmpty) return;
     setState(() => _state = _ScreenState.searching);
     try {
-      final isDemoMode = ref.read(isDemoModeProvider);
       final results = await PrsService.searchByTrait(q);
       setState(() {
         _scores = results;
