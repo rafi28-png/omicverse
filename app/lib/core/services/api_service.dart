@@ -19,11 +19,36 @@ class ApiService {
     return results.isEmpty ||
         results.every((r) => r == ConnectivityResult.none);
   }
+  // Domains that send Access-Control-Allow-Origin: * natively
+  static const _corsNativeDomains = [
+    'supabase.co',
+    'rest.ensembl.org',
+    'grch37.rest.ensembl.org',
+    'rest.uniprot.org',
+    'alphafold.ebi.ac.uk',
+    'www.ebi.ac.uk',          // ChEMBL, InterPro, QuickGO
+    'string-db.org',
+    'gnomad.broadinstitute.org',
+    'spliceailookup.broadinstitute.org',
+    'gtexportal.org',
+    'www.encodeproject.org',
+    'eutils.ncbi.nlm.nih.gov',
+    'jaspar.elixir.no',
+    'data.4dnucleome.org',
+    'api.genome.ucsc.edu',
+    'www.pgscatalog.org',
+    'api.gdc.cancer.gov',
+    'clinicaltrials.gov',
+  ];
 
   static String _proxiedUrl(String url) {
     if (!kIsWeb) return url;
-    if (url.contains('supabase.co')) return url;
-    return 'https://corsproxy.io/?${Uri.encodeComponent(url)}';
+    // Skip proxy for APIs that support CORS natively
+    for (final domain in _corsNativeDomains) {
+      if (url.contains(domain)) return url;
+    }
+    // Only proxy APIs that lack CORS headers (e.g., KEGG)
+    return 'https://api.allorigins.win/raw?url=${Uri.encodeComponent(url)}';
   }
 
   static Future<T> get<T>(String url, {
