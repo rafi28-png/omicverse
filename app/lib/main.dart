@@ -44,6 +44,8 @@ void main() {
       const defineUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: '');
       const defineKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
       const defineNcbiKey = String.fromEnvironment('NCBI_API_KEY', defaultValue: '');
+      const defineOmimKey = String.fromEnvironment('OMIM_API_KEY', defaultValue: '');
+      const defineDisgenetKey = String.fromEnvironment('DISGENET_API_KEY', defaultValue: '');
 
       // Step 2: Load .env (local dev only, skip on web)
       if (!kIsWeb) {
@@ -57,6 +59,8 @@ void main() {
         dartDefineUrl: defineUrl,
         dartDefineKey: defineKey,
         dartDefineNcbiKey: defineNcbiKey,
+        dartDefineOmimKey: defineOmimKey,
+        dartDefineDisgenetKey: defineDisgenetKey,
         dotenvUrl: kIsWeb ? null : dotenv.maybeGet('SUPABASE_URL'),
         dotenvKey: kIsWeb ? null : dotenv.maybeGet('SUPABASE_ANON_KEY'),
         dotenvAppName: kIsWeb ? null : dotenv.maybeGet('APP_NAME'),
@@ -67,9 +71,15 @@ void main() {
         dotenvDebug: kIsWeb ? null : dotenv.maybeGet('DEBUG_MODE'),
       );
 
-      // Set NCBI API key for faster E-utilities queries
+      // Set API keys for faster/authenticated queries
       if (config.ncbiApiKey.isNotEmpty) {
         ApiConstants.setNcbiApiKey(config.ncbiApiKey);
+      }
+      if (config.omimApiKey.isNotEmpty) {
+        ApiConstants.setOmimApiKey(config.omimApiKey);
+      }
+      if (config.disgenetApiKey.isNotEmpty) {
+        ApiConstants.setDisgenetApiKey(config.disgenetApiKey);
       }
 
       // Step 4: Initialize Hive

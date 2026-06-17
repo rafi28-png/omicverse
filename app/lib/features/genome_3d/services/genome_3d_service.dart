@@ -1,136 +1,169 @@
-class TAD {
-  final String chromosome;
-  final int start;
-  final int end;
-  final String? name;
-  final double? insulation;
-  final List<String> genes;
+import '../../../core/services/api_service.dart';
+import '../../../core/services/api_constants.dart';
+import '../../../core/services/rate_limiter.dart';
 
-  const TAD({
-    required this.chromosome,
-    required this.start,
-    required this.end,
-    this.name,
-    this.insulation,
-    this.genes = const [],
+// ── Data Models ────────────────────────────────────────────────
+
+class OmimDisease {
+  final int mimNumber;
+  final String title;
+  final String? description;
+  final String? inheritance;
+  final String? genemap;
+  final List<String> phenotypes;
+
+  const OmimDisease({
+    required this.mimNumber,
+    required this.title,
+    this.description,
+    this.inheritance,
+    this.genemap,
+    this.phenotypes = const [],
   });
 
-  String get location => 'chr$chromosome:$start-$end';
-  int get size => end - start;
-  String get sizeLabel {
-    if (size >= 1000000) return '${(size / 1000000).toStringAsFixed(1)} Mb';
-    return '${(size / 1000).toStringAsFixed(0)} kb';
-  }
+  String get url => 'https://omim.org/entry/$mimNumber';
+  String get shortTitle => title.length > 80 ? '${title.substring(0, 77)}...' : title;
 
-  static List<TAD> demoTADs() => const [
-    TAD(chromosome: '17', start: 7500000, end: 7800000, name: 'TP53 TAD',
-      insulation: -1.8, genes: ['TP53', 'WRAP53', 'EFNB3']),
-    TAD(chromosome: '17', start: 43000000, end: 43300000, name: 'BRCA1 TAD',
-      insulation: -2.1, genes: ['BRCA1', 'NBR1', 'NBR2']),
-    TAD(chromosome: '7', start: 55000000, end: 55400000, name: 'EGFR TAD',
-      insulation: -1.5, genes: ['EGFR', 'LANCL2']),
-    TAD(chromosome: '12', start: 25100000, end: 25400000, name: 'KRAS TAD',
-      insulation: -1.9, genes: ['KRAS', 'LYRM5']),
-    TAD(chromosome: '7', start: 140700000, end: 140900000, name: 'BRAF TAD',
-      insulation: -1.3, genes: ['BRAF', 'MRPS33']),
+  static List<OmimDisease> demoData(String gene) => [
+    OmimDisease(mimNumber: 191170, title: 'TUMOR PROTEIN p53; TP53', description: 'TP53 encodes a tumor suppressor protein containing transcriptional activation, DNA binding, and oligomerization domains.', inheritance: 'AD', phenotypes: ['Li-Fraumeni syndrome', 'Breast cancer', 'Colorectal cancer']),
+    OmimDisease(mimNumber: 151623, title: 'LI-FRAUMENI SYNDROME; LFS', description: 'Li-Fraumeni syndrome is a cancer predisposition disorder caused by germline mutations in TP53.', inheritance: 'AD', phenotypes: ['Sarcoma', 'Breast cancer', 'Brain tumors', 'Adrenocortical carcinoma']),
   ];
 }
 
-class ChromatinLoop {
-  final String chromosome;
-  final int anchor1Start;
-  final int anchor1End;
-  final int anchor2Start;
-  final int anchor2End;
+class DiseaseAssociation {
+  final String diseaseName;
+  final String diseaseId;
   final double score;
-  final String? gene1;
-  final String? gene2;
+  final String source;
+  final int nPublications;
 
-  const ChromatinLoop({
-    required this.chromosome,
-    required this.anchor1Start,
-    required this.anchor1End,
-    required this.anchor2Start,
-    required this.anchor2End,
+  const DiseaseAssociation({
+    required this.diseaseName,
+    required this.diseaseId,
     required this.score,
-    this.gene1,
-    this.gene2,
+    required this.source,
+    this.nPublications = 0,
   });
 
-  String get label => '${gene1 ?? ""}↔${gene2 ?? ""}';
-  int get distance => anchor2Start - anchor1End;
-  String get distanceLabel {
-    if (distance >= 1000000) return '${(distance / 1000000).toStringAsFixed(1)} Mb';
-    return '${(distance / 1000).toStringAsFixed(0)} kb';
+  String get scoreLabel => score.toStringAsFixed(3);
+  String get evidenceLevel {
+    if (score >= 0.7) return 'Strong';
+    if (score >= 0.4) return 'Moderate';
+    if (score >= 0.1) return 'Weak';
+    return 'Minimal';
   }
 
-  static List<ChromatinLoop> demoLoops() => const [
-    ChromatinLoop(chromosome: '17', anchor1Start: 7650000, anchor1End: 7660000,
-      anchor2Start: 7780000, anchor2End: 7790000, score: 8.5,
-      gene1: 'TP53', gene2: 'WRAP53'),
-    ChromatinLoop(chromosome: '17', anchor1Start: 43040000, anchor1End: 43050000,
-      anchor2Start: 43200000, anchor2End: 43210000, score: 7.2,
-      gene1: 'BRCA1', gene2: 'NBR1'),
-    ChromatinLoop(chromosome: '7', anchor1Start: 55080000, anchor1End: 55090000,
-      anchor2Start: 55250000, anchor2End: 55260000, score: 6.8,
-      gene1: 'EGFR', gene2: 'LANCL2'),
-    ChromatinLoop(chromosome: '12', anchor1Start: 25200000, anchor1End: 25210000,
-      anchor2Start: 25350000, anchor2End: 25360000, score: 9.1,
-      gene1: 'KRAS', gene2: 'LYRM5'),
+  static List<DiseaseAssociation> demoData(String gene) => [
+    DiseaseAssociation(diseaseName: 'Li-Fraumeni Syndrome', diseaseId: 'C0023379', score: 0.95, source: 'DisGeNET', nPublications: 342),
+    DiseaseAssociation(diseaseName: 'Breast Cancer', diseaseId: 'C0006142', score: 0.87, source: 'DisGeNET', nPublications: 1205),
+    DiseaseAssociation(diseaseName: 'Colorectal Cancer', diseaseId: 'C0009402', score: 0.72, source: 'DisGeNET', nPublications: 456),
+    DiseaseAssociation(diseaseName: 'Lung Cancer', diseaseId: 'C0242379', score: 0.68, source: 'DisGeNET', nPublications: 389),
+    DiseaseAssociation(diseaseName: 'Ovarian Cancer', diseaseId: 'C0029925', score: 0.61, source: 'DisGeNET', nPublications: 198),
   ];
 }
 
-class Compartment {
-  final String chromosome;
-  final int start;
-  final int end;
-  final String type; // A (active) or B (inactive)
-  final double eigenvalue;
+// ── Service ────────────────────────────────────────────────────
 
-  const Compartment({
-    required this.chromosome,
-    required this.start,
-    required this.end,
-    required this.type,
-    required this.eigenvalue,
-  });
+class DiseaseGeneticsService {
+  /// Query OMIM for gene-disease entries
+  static Future<List<OmimDisease>> getOmimEntries(String gene) async {
+    final apiKey = ApiConstants.omimApiKey;
+    if (apiKey.isEmpty) return OmimDisease.demoData(gene);
 
-  String get label => 'Compartment $type';
-  bool get isActive => type == 'A';
-}
+    try {
+      await RateLimiter.throttle('omim');
+      final url = '${ApiConstants.omim}/entry/search'
+        '?search=$gene'
+        '&format=json'
+        '&apiKey=$apiKey'
+        '&include=geneMap,text'
+        '&start=0&limit=10';
 
-class Genome3dService {
-  /// Get TADs for a chromosome region
-  static Future<List<TAD>> getTADs(String chr) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    return TAD.demoTADs().where((t) => t.chromosome == chr).toList();
+      final resp = await ApiService.get<Map<String, dynamic>>(url);
+      final results = <OmimDisease>[];
+
+      final searchResponse = resp['omim']?['searchResponse'] as Map<String, dynamic>?;
+      final entryList = searchResponse?['entryList'] as List<dynamic>?;
+      if (entryList == null || entryList.isEmpty) return OmimDisease.demoData(gene);
+
+      for (final entry in entryList) {
+        final e = entry['entry'] as Map<String, dynamic>?;
+        if (e == null) continue;
+
+        final mimNumber = e['mimNumber'] as int? ?? 0;
+        final titles = e['titles'] as Map<String, dynamic>?;
+        final title = titles?['preferredTitle'] as String? ?? 'Unknown';
+
+        // Extract text description
+        String? description;
+        final textSectionList = e['textSectionList'] as List<dynamic>?;
+        if (textSectionList != null && textSectionList.isNotEmpty) {
+          final first = textSectionList[0]['textSection'] as Map<String, dynamic>?;
+          final text = first?['textSectionContent'] as String? ?? '';
+          description = text.length > 300 ? '${text.substring(0, 297)}...' : text;
+        }
+
+        // Extract phenotypes from geneMap
+        final phenotypes = <String>[];
+        final geneMap = e['geneMap'] as Map<String, dynamic>?;
+        final phenotypeMapList = geneMap?['phenotypeMapList'] as List<dynamic>?;
+        String? inheritance;
+        if (phenotypeMapList != null) {
+          for (final pm in phenotypeMapList) {
+            final phenotypeMap = pm['phenotypeMap'] as Map<String, dynamic>?;
+            final name = phenotypeMap?['phenotype'] as String?;
+            if (name != null) phenotypes.add(name);
+            inheritance ??= phenotypeMap?['phenotypeInheritance'] as String?;
+          }
+        }
+
+        results.add(OmimDisease(
+          mimNumber: mimNumber,
+          title: title,
+          description: description,
+          inheritance: inheritance,
+          phenotypes: phenotypes,
+        ));
+      }
+
+      return results.isEmpty ? OmimDisease.demoData(gene) : results;
+    } catch (_) {
+      return OmimDisease.demoData(gene);
+    }
   }
 
-  /// Get chromatin loops
-  static Future<List<ChromatinLoop>> getLoops(String chr) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    return ChromatinLoop.demoLoops().where((l) => l.chromosome == chr).toList();
-  }
+  /// Query DisGeNET for gene-disease associations
+  static Future<List<DiseaseAssociation>> getDiseaseAssociations(String gene) async {
+    final apiKey = ApiConstants.disgenetApiKey;
+    if (apiKey.isEmpty) return DiseaseAssociation.demoData(gene);
 
-  /// Get all demo data by gene
-  static Future<Map<String, dynamic>> getByGene(String gene) async {
-    final tads = TAD.demoTADs().where((t) =>
-      t.genes.any((g) => g.toLowerCase() == gene.toLowerCase())).toList();
-    final loops = ChromatinLoop.demoLoops().where((l) =>
-      l.gene1?.toLowerCase() == gene.toLowerCase() ||
-      l.gene2?.toLowerCase() == gene.toLowerCase()).toList();
-    return {'tads': tads, 'loops': loops};
-  }
+    try {
+      await RateLimiter.throttle('disgenet');
+      final resp = await ApiService.getWithHeaders<List<dynamic>>(
+        '${ApiConstants.disgenet}/gda/gene/$gene',
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Accept': 'application/json',
+        },
+      );
 
-  /// Available chromosomes in demo
-  static List<String> availableChromosomes() {
-    final chrs = <String>{};
-    for (final t in TAD.demoTADs()) { chrs.add(t.chromosome); }
-    for (final l in ChromatinLoop.demoLoops()) { chrs.add(l.chromosome); }
-    return chrs.toList()..sort((a, b) {
-      final ai = int.tryParse(a) ?? 99;
-      final bi = int.tryParse(b) ?? 99;
-      return ai.compareTo(bi);
-    });
+      if (resp.isEmpty) return DiseaseAssociation.demoData(gene);
+
+      final results = resp.map((item) {
+        final m = item as Map<String, dynamic>;
+        return DiseaseAssociation(
+          diseaseName: m['disease_name'] as String? ?? 'Unknown',
+          diseaseId: m['diseaseid'] as String? ?? '',
+          score: (m['score'] as num?)?.toDouble() ?? 0.0,
+          source: 'DisGeNET',
+          nPublications: (m['pmid_count'] as num?)?.toInt() ?? 0,
+        );
+      }).toList();
+
+      results.sort((a, b) => b.score.compareTo(a.score));
+      return results.take(20).toList();
+    } catch (_) {
+      return DiseaseAssociation.demoData(gene);
+    }
   }
 }

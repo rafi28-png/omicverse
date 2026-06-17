@@ -39,6 +39,8 @@ class ApiService {
     'www.pgscatalog.org',
     'api.gdc.cancer.gov',
     'clinicaltrials.gov',
+    'api.omim.org',
+    'www.disgenet.org',
   ];
 
   static String _proxiedUrl(String url) {
@@ -87,6 +89,34 @@ class ApiService {
           }
           if (e.response?.statusCode == 404) throw const NotFoundError();
           throw const NetworkError('Connection failed. Please try again.');
+        }
+        await Future.delayed(Duration(seconds: [1, 2, 4][attempt - 1]));
+      }
+    }
+    throw const NetworkError('Request failed after multiple attempts.');
+  }
+
+  /// GET with custom headers (for APIs requiring Bearer auth like DisGeNET)
+  static Future<T> getWithHeaders<T>(String url, {
+    Map<String, String>? headers,
+    int maxRetries = 3,
+  }) async {
+    if (await _isOffline()) {
+      throw const NetworkError('No internet connection.');
+    }
+    final finalUrl = _proxiedUrl(url);
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        final response = await _dio.get(
+          finalUrl,
+          options: Options(headers: headers),
+        );
+        if (response.data == null) throw const ParseError('Empty response');
+        return response.data as T;
+      } on DioException catch (e) {
+        if (attempt == maxRetries) {
+          if (e.response?.statusCode == 404) throw const NotFoundError();
+          throw const NetworkError('Request failed.');
         }
         await Future.delayed(Duration(seconds: [1, 2, 4][attempt - 1]));
       }

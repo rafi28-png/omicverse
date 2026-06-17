@@ -7,6 +7,8 @@ class AppConfig {
   final String supabaseUrl;
   final String supabaseAnonKey;
   final String ncbiApiKey;
+  final String omimApiKey;
+  final String disgenetApiKey;
   final String appName;
   final String appVersion;
   final int maxVcfVariants;
@@ -18,6 +20,8 @@ class AppConfig {
     required this.supabaseUrl,
     required this.supabaseAnonKey,
     this.ncbiApiKey = '',
+    this.omimApiKey = '',
+    this.disgenetApiKey = '',
     this.appName = 'OmicVerse',
     this.appVersion = '1.0.0',
     this.maxVcfVariants = 10000,
@@ -34,6 +38,8 @@ class AppConfig {
     required String dartDefineUrl,
     required String dartDefineKey,
     String dartDefineNcbiKey = '',
+    String dartDefineOmimKey = '',
+    String dartDefineDisgenetKey = '',
     String? dotenvUrl,
     String? dotenvKey,
     String? dotenvAppName,
@@ -68,6 +74,8 @@ class AppConfig {
           ? dartDefineKey
           : (dotenvKey ?? ''),
       ncbiApiKey: dartDefineNcbiKey,
+      omimApiKey: dartDefineOmimKey,
+      disgenetApiKey: dartDefineDisgenetKey,
       appName: dotenvAppName ?? 'OmicVerse',
       appVersion: dotenvAppVersion ?? '1.0.0',
       maxVcfVariants: int.tryParse(dotenvMaxVcf ?? '') ?? 10000,

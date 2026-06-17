@@ -19,6 +19,8 @@ class ApiConstants {
   static const gnomad      = 'https://gnomad.broadinstitute.org/api';
   static const encode      = 'https://www.encodeproject.org';
   static const ncbi        = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
+  static const omim        = 'https://api.omim.org/api';
+  static const disgenet    = 'https://www.disgenet.org/api';
 
   static const spliceaiBrowserUrl = 'https://spliceailookup.broadinstitute.org';
   static const horvathWeightsAsset = 'assets/demo_data/horvath_cpg_weights.csv';
@@ -26,6 +28,14 @@ class ApiConstants {
   /// NCBI API key — set from AppConfig at startup for 10x rate limit increase
   static String _ncbiApiKey = '';
   static void setNcbiApiKey(String key) => _ncbiApiKey = key;
+
+  static String _omimApiKey = '';
+  static void setOmimApiKey(String key) => _omimApiKey = key;
+  static String get omimApiKey => _omimApiKey;
+
+  static String _disgenetApiKey = '';
+  static void setDisgenetApiKey(String key) => _disgenetApiKey = key;
+  static String get disgenetApiKey => _disgenetApiKey;
 
   static String alphaFoldPrediction(String uniprotId) =>
     'https://alphafold.ebi.ac.uk/api/prediction/$uniprotId';
