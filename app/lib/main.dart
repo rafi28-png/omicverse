@@ -11,6 +11,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'core/config/app_config.dart';
 import 'core/providers/app_providers.dart';
 import 'core/services/cache_service.dart';
+import 'core/services/api_constants.dart';
 import 'core/utils/safe_hive.dart';
 import 'app.dart';
 
@@ -42,6 +43,7 @@ void main() {
       // Step 1: Read --dart-define values
       const defineUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: '');
       const defineKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
+      const defineNcbiKey = String.fromEnvironment('NCBI_API_KEY', defaultValue: '');
 
       // Step 2: Load .env (local dev only, skip on web)
       if (!kIsWeb) {
@@ -54,6 +56,7 @@ void main() {
       final config = AppConfig.fromEnvironment(
         dartDefineUrl: defineUrl,
         dartDefineKey: defineKey,
+        dartDefineNcbiKey: defineNcbiKey,
         dotenvUrl: kIsWeb ? null : dotenv.maybeGet('SUPABASE_URL'),
         dotenvKey: kIsWeb ? null : dotenv.maybeGet('SUPABASE_ANON_KEY'),
         dotenvAppName: kIsWeb ? null : dotenv.maybeGet('APP_NAME'),
@@ -63,6 +66,11 @@ void main() {
         dotenvCacheTtl: kIsWeb ? null : dotenv.maybeGet('CACHE_TTL_HOURS'),
         dotenvDebug: kIsWeb ? null : dotenv.maybeGet('DEBUG_MODE'),
       );
+
+      // Set NCBI API key for faster E-utilities queries
+      if (config.ncbiApiKey.isNotEmpty) {
+        ApiConstants.setNcbiApiKey(config.ncbiApiKey);
+      }
 
       // Step 4: Initialize Hive
       try { await Hive.initFlutter(); } catch (e) {

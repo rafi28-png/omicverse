@@ -6,6 +6,7 @@
 class AppConfig {
   final String supabaseUrl;
   final String supabaseAnonKey;
+  final String ncbiApiKey;
   final String appName;
   final String appVersion;
   final int maxVcfVariants;
@@ -16,6 +17,7 @@ class AppConfig {
   const AppConfig({
     required this.supabaseUrl,
     required this.supabaseAnonKey,
+    this.ncbiApiKey = '',
     this.appName = 'OmicVerse',
     this.appVersion = '1.0.0',
     this.maxVcfVariants = 10000,
@@ -31,6 +33,7 @@ class AppConfig {
   factory AppConfig.fromEnvironment({
     required String dartDefineUrl,
     required String dartDefineKey,
+    String dartDefineNcbiKey = '',
     String? dotenvUrl,
     String? dotenvKey,
     String? dotenvAppName,
@@ -64,6 +67,7 @@ class AppConfig {
       supabaseAnonKey: dartDefineKey.isNotEmpty
           ? dartDefineKey
           : (dotenvKey ?? ''),
+      ncbiApiKey: dartDefineNcbiKey,
       appName: dotenvAppName ?? 'OmicVerse',
       appVersion: dotenvAppVersion ?? '1.0.0',
       maxVcfVariants: int.tryParse(dotenvMaxVcf ?? '') ?? 10000,

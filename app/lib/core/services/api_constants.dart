@@ -23,11 +23,19 @@ class ApiConstants {
   static const spliceaiBrowserUrl = 'https://spliceailookup.broadinstitute.org';
   static const horvathWeightsAsset = 'assets/demo_data/horvath_cpg_weights.csv';
 
+  /// NCBI API key — set from AppConfig at startup for 10x rate limit increase
+  static String _ncbiApiKey = '';
+  static void setNcbiApiKey(String key) => _ncbiApiKey = key;
+
   static String alphaFoldPrediction(String uniprotId) =>
     'https://alphafold.ebi.ac.uk/api/prediction/$uniprotId';
 
   static String ncbiUrl(String endpoint, Map<String, String> params) {
-    final query = params.entries
+    final allParams = Map<String, String>.from(params);
+    if (_ncbiApiKey.isNotEmpty) {
+      allParams['api_key'] = _ncbiApiKey;
+    }
+    final query = allParams.entries
         .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
         .join('&');
     return '$ncbi/$endpoint?$query';
