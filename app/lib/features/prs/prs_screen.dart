@@ -36,11 +36,7 @@ class _PrsScreenState extends ConsumerState<PrsScreen> {
     setState(() => _state = _ScreenState.searching);
     try {
       final isDemoMode = ref.read(isDemoModeProvider);
-      final results = isDemoMode
-        ? PgsScore.demoScores().where((s) =>
-            s.trait.toLowerCase().contains(q.toLowerCase()) ||
-            s.name.toLowerCase().contains(q.toLowerCase())).toList()
-        : await PrsService.searchByTrait(q);
+      final results = await PrsService.searchByTrait(q);
       setState(() {
         _scores = results;
         _state = results.isEmpty ? _ScreenState.idle : _ScreenState.results;

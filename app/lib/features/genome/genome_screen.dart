@@ -44,16 +44,7 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
     try {
       final isDemoMode = ref.read(isDemoModeProvider);
       List<GeneInfo> results;
-
-      if (isDemoMode) {
-        // Demo mode: filter demo genes
-        results = GeneInfo.demoGenes().where((g) =>
-          g.symbol.toLowerCase().contains(q.toLowerCase()) ||
-          g.ensemblId.toLowerCase().contains(q.toLowerCase())
-        ).toList();
-      } else {
-        results = await GenomeService.searchGene(q);
-      }
+      results = await GenomeService.searchGene(q);
 
       setState(() {
         _results = results;

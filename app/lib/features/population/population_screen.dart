@@ -48,16 +48,9 @@ class _PopulationScreenState extends ConsumerState<PopulationScreen> {
     try {
       final isDemoMode = ref.read(isDemoModeProvider);
       PopulationVariant? result;
-      if (isDemoMode) {
-        final vid = '$chr-$pos-$refAllele-$altAllele';
-        result = PopulationVariant.demoVariants().where((v) =>
-          v.variantId == vid).firstOrNull;
-        result ??= PopulationVariant.demoVariants().first;
-      } else {
-        result = await PopulationService.queryVariant(
-          chromosome: chr, position: pos, reference: refAllele, alternate: altAllele);
-        result ??= PopulationVariant.demoVariants().first;
-      }
+      result = await PopulationService.queryVariant(
+        chromosome: chr, position: pos, reference: refAllele, alternate: altAllele);
+      result ??= PopulationVariant.demoVariants().first;
       setState(() { _variant = result; _state = _ScreenState.results; });
     } catch (e) {
       setState(() { _state = _ScreenState.error; _error = e.toString(); });

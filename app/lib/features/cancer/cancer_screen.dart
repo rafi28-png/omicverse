@@ -37,10 +37,7 @@ class _CancerScreenState extends ConsumerState<CancerScreen> {
     setState(() => _state = _ScreenState.searching);
     try {
       final isDemoMode = ref.read(isDemoModeProvider);
-      final mutations = isDemoMode
-        ? CancerMutation.demoMutations().where((m) =>
-            m.gene.toLowerCase() == gene.toLowerCase()).toList()
-        : await CancerService.getMutations(gene);
+      final mutations = await CancerService.getMutations(gene);
       setState(() {
         _mutations = mutations;
         _state = mutations.isEmpty ? _ScreenState.idle : _ScreenState.results;

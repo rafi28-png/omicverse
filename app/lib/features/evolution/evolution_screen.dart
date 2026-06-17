@@ -36,9 +36,7 @@ class _EvolutionScreenState extends ConsumerState<EvolutionScreen> {
     setState(() => _state = _ScreenState.searching);
     try {
       final isDemoMode = ref.read(isDemoModeProvider);
-      final orthologs = isDemoMode
-        ? EvolutionService.demoOrthologs(gene)
-        : await EvolutionService.getOrthologs(gene);
+      final orthologs = await EvolutionService.getOrthologs(gene);
       setState(() {
         _orthologs = orthologs;
         _state = orthologs.isEmpty ? _ScreenState.idle : _ScreenState.results;
