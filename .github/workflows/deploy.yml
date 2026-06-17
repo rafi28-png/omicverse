@@ -44,6 +44,7 @@ jobs:
       - name: Build web
         run: |
           flutter build web --release \
+            --web-renderer html \
             --pwa-strategy none \
             --base-href "/${{ github.event.repository.name }}/" \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
