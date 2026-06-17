@@ -18,6 +18,7 @@ import '../../core/widgets/dna_loader.dart';
 import '../../core/services/file_upload_service.dart';
 import '../../core/providers/app_providers.dart';
 import 'services/expression_parser.dart';
+import 'services/gtex_service.dart';
 
 enum _ScreenState { upload, parsing, results, error }
 
@@ -34,6 +35,26 @@ class _ExpressionScreenState extends ConsumerState<ExpressionScreen> {
   ExpressionParseResult? _result;
   String _filterType = 'all'; // all, up, down, deg
   String _searchQuery = '';
+
+  // GTEx gene lookup
+  final _gtexCtrl = TextEditingController();
+  bool _gtexLoading = false;
+  List<TissueExpression>? _gtexResults;
+  String? _gtexGene;
+
+  @override
+  void dispose() {
+    _gtexCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _lookupGtex() async {
+    final q = _gtexCtrl.text.trim().toUpperCase();
+    if (q.isEmpty) return;
+    setState(() { _gtexLoading = true; _gtexResults = null; _gtexGene = q; });
+    final results = await GtexService.getTissueExpression(q);
+    setState(() { _gtexResults = results; _gtexLoading = false; });
+  }
 
   Future<void> _pickFile() async {
     try {
@@ -168,6 +189,83 @@ class _ExpressionScreenState extends ConsumerState<ExpressionScreen> {
       case _ScreenState.upload:
         return Column(
           children: [
+            // ── GTEx Tissue Expression Lookup ───────────────────────────
+            GlowCard(
+              glowColor: kNeonTeal,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    const Icon(Icons.analytics_outlined, color: kNeonTeal, size: 18),
+                    const SizedBox(width: 8),
+                    Text('GTEx Tissue Expression', style: tsBody().copyWith(color: kNeonTeal)),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: kNeonTeal.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text('54 tissues · Real data', style: tsLabel().copyWith(color: kNeonTeal, fontSize: 10)),
+                    ),
+                  ]),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _gtexCtrl,
+                        style: tsBody().copyWith(color: kTextPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Search gene (e.g. TP53, BRCA1, EGFR)',
+                          hintStyle: tsBody().copyWith(color: kTextMuted),
+                          filled: true,
+                          fillColor: kSurface,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                        onSubmitted: (_) => _lookupGtex(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    NeonButton(label: 'Lookup', icon: Icons.search, color: kNeonTeal, onPressed: _lookupGtex),
+                  ]),
+                  if (_gtexLoading) ...[
+                    const SizedBox(height: 16),
+                    const Center(child: DnaLoader(message: 'Fetching GTEx data...')),
+                  ],
+                  if (_gtexResults != null && !_gtexLoading) ...[
+                    const SizedBox(height: 16),
+                    Text('$_gtexGene expression across ${_gtexResults!.length} tissues', style: tsLabel().copyWith(color: kTextMuted)),
+                    const SizedBox(height: 8),
+                    ..._gtexResults!.take(15).map((t) {
+                      final maxTpm = _gtexResults!.first.medianTpm.clamp(1.0, double.infinity);
+                      final frac = (t.medianTpm / maxTpm).clamp(0.0, 1.0);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(children: [
+                          SizedBox(width: 160, child: Text(t.tissue, style: tsLabel().copyWith(fontSize: 11), overflow: TextOverflow.ellipsis)),
+                          const SizedBox(width: 8),
+                          Expanded(child: Stack(children: [
+                            Container(height: 14, decoration: BoxDecoration(color: kSurface, borderRadius: BorderRadius.circular(4))),
+                            FractionallySizedBox(
+                              widthFactor: frac,
+                              child: Container(height: 14, decoration: BoxDecoration(
+                                gradient: const LinearGradient(colors: kGradExpression),
+                                borderRadius: BorderRadius.circular(4),
+                              )),
+                            ),
+                          ])),
+                          const SizedBox(width: 8),
+                          SizedBox(width: 60, child: Text(t.tpmLabel, style: tsLabel().copyWith(fontSize: 10), textAlign: TextAlign.right)),
+                        ]),
+                      );
+                    }),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            // ── DEG File Upload ─────────────────────────────────────────
             FileUploadZone(
               label: 'Upload expression data (DESeq2, edgeR, limma)',
               acceptedFormats: '.csv, .tsv, .txt',
