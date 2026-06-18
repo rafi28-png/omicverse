@@ -24,7 +24,7 @@ class OmimDisease {
   String get url => 'https://omim.org/entry/$mimNumber';
   String get shortTitle => title.length > 80 ? '${title.substring(0, 77)}...' : title;
 
-  static List<OmimDisease> demoData(String gene) => [
+  static List<OmimDisease> demoData(String gene) => const [
     OmimDisease(mimNumber: 191170, title: 'TUMOR PROTEIN p53; TP53', description: 'TP53 encodes a tumor suppressor protein containing transcriptional activation, DNA binding, and oligomerization domains.', inheritance: 'AD', phenotypes: ['Li-Fraumeni syndrome', 'Breast cancer', 'Colorectal cancer']),
     OmimDisease(mimNumber: 151623, title: 'LI-FRAUMENI SYNDROME; LFS', description: 'Li-Fraumeni syndrome is a cancer predisposition disorder caused by germline mutations in TP53.', inheritance: 'AD', phenotypes: ['Sarcoma', 'Breast cancer', 'Brain tumors', 'Adrenocortical carcinoma']),
   ];
@@ -53,7 +53,7 @@ class DiseaseAssociation {
     return 'Minimal';
   }
 
-  static List<DiseaseAssociation> demoData(String gene) => [
+  static List<DiseaseAssociation> demoData(String gene) => const [
     DiseaseAssociation(diseaseName: 'Li-Fraumeni Syndrome', diseaseId: 'C0023379', score: 0.95, source: 'DisGeNET', nPublications: 342),
     DiseaseAssociation(diseaseName: 'Breast Cancer', diseaseId: 'C0006142', score: 0.87, source: 'DisGeNET', nPublications: 1205),
     DiseaseAssociation(diseaseName: 'Colorectal Cancer', diseaseId: 'C0009402', score: 0.72, source: 'DisGeNET', nPublications: 456),

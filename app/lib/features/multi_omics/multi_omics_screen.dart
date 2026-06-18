@@ -224,7 +224,7 @@ class _MultiOmicsScreenState extends ConsumerState<MultiOmicsScreen> {
   Widget _buildModuleGrid(BuildContext context) {
     final routes = MultiOmicsService.moduleRoutes();
     final gradients = {
-      'Genome': kGradGenome, '3D Genome': kGrad3DGenome, 'Variant': kGradVariant,
+      'Genome': kGradGenome, 'Disease Genetics': kGrad3DGenome, 'Variant': kGradVariant,
       'Expression': kGradExpression, 'Pathway': kGradPathway, 'Protein': kGradProtein,
       'Regulatory': kGradRegulatory, 'Population': kGradPopulation, 'PRS': kGradPRS,
       'Methylation': kGradEpigenome, 'CRISPR': kGradCRISPR, 'Cancer': kGradCancer,

@@ -28,7 +28,7 @@ OmicVerse bridges the gap between raw genomic data files and interactive cloud v
 12. **Evolutionary Conservation**: Evaluate phyloP/phastCons conservation scores across mammalian species.
 13. **Alternative Splicing**: Profile alternative splicing events (ASEs) and Percent Spliced In (PSI) indices.
 14. **Pharmacogenomics (Drug)**: Search drug-gene interactions and actionable clinical guidelines.
-15. **3D Genomes (Chromatin)**: Explore topologically associating domains (TADs) and chromatin loops (Hi-C).
+15. **Disease Genetics (OMIM + DisGeNET)**: Query Mendelian disease entries and gene-disease association scores from literature.
 16. **Multi-Omics Integration**: Aggregate multi-layered datasets to compile a unified, multi-omics gene profile.
 17. **Real-time Collaboration**: Start live, synchronized collaborative sessions with other researchers to draw, point, and write notes on shared genomic workspaces.
 
@@ -40,8 +40,7 @@ OmicVerse bridges the gap between raw genomic data files and interactive cloud v
 You can access the live web application immediately without installation:
 👉 **[https://rafi28-png.github.io/omicverse/](https://rafi28-png.github.io/omicverse/)**
 
-* **Demo Mode**: The application defaults to Demo Mode, allowing you to click around and explore features using pre-loaded mock datasets immediately.
-* **Live API Mode**: Open **Settings** (⚙️ top right) and toggle **Demo Mode to OFF** to connect the application directly to live public bioinformatics servers.
+* **Live APIs**: All 16 modules connect directly to real public bioinformatics APIs (Ensembl, UniProt, gnomAD, KEGG, GTEx, OMIM, DisGeNET, and more). If an API is unavailable, the module gracefully falls back to bundled demo data.
 * **Sample Loaders**: In the **Variant** and **Expression** modules, click **"Load Sample"** to parse and analyze real-world genomic datasets instantly.
 
 ---
@@ -108,11 +107,19 @@ flutter analyze
 
 OmicVerse accesses public research infrastructure. We express our gratitude to the maintainers of:
 * **Ensembl**: [rest.ensembl.org](https://rest.ensembl.org)
-* **AlphaFold**: [alphafold.ebi.ac.uk](https://alphafold.ebi.ac.uk)
-* **STRING**: [string-db.org](https://string-db.org)
-* **KEGG**: [kegg.jp](https://www.kegg.jp) (Kanehisa Laboratories; non-commercial academic use)
+* **UniProt**: [uniprot.org](https://www.uniprot.org)
+* **OMIM**: [omim.org](https://omim.org) (Online Mendelian Inheritance in Man)
+* **DisGeNET**: [disgenet.org](https://www.disgenet.org) (gene-disease associations)
+* **GTEx Portal**: [gtexportal.org](https://gtexportal.org) (tissue expression)
 * **gnomAD**: [gnomad.broadinstitute.org](https://gnomad.broadinstitute.org)
-* **NCBI dbSNP & ClinVar**: [ncbi.nlm.nih.gov](https://www.ncbi.nlm.nih.gov)
+* **NCBI (dbSNP, ClinVar)**: [ncbi.nlm.nih.gov](https://www.ncbi.nlm.nih.gov)
+* **KEGG**: [kegg.jp](https://www.kegg.jp) (Kanehisa Laboratories; non-commercial academic use)
+* **ChEMBL**: [ebi.ac.uk/chembl](https://www.ebi.ac.uk/chembl)
+* **PGS Catalog**: [pgscatalog.org](https://www.pgscatalog.org)
+* **ENCODE**: [encodeproject.org](https://www.encodeproject.org)
+* **cBioPortal**: [cbioportal.org](https://www.cbioportal.org)
+* **STRING**: [string-db.org](https://string-db.org)
+* **AlphaFold**: [alphafold.ebi.ac.uk](https://alphafold.ebi.ac.uk)
 
 ---
 

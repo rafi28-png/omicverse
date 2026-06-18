@@ -73,7 +73,7 @@ GoRouter createRouter(Ref ref) {
       GoRoute(path: '/settings',    builder: (c, s) => const ErrorBoundary(moduleName: 'Settings', child: SettingsScreen())),
       GoRoute(path: '/about',       builder: (c, s) => const ErrorBoundary(moduleName: 'About', child: AboutScreen())),
       GoRoute(path: '/genome',      builder: (c, s) => const ErrorBoundary(moduleName: 'Genome Browser', child: GenomeScreen())),
-      GoRoute(path: '/genome_3d',   builder: (c, s) => const ErrorBoundary(moduleName: '3D Genome', child: Genome3dScreen())),
+      GoRoute(path: '/genome_3d',   builder: (c, s) => const ErrorBoundary(moduleName: 'Disease Genetics', child: Genome3dScreen())),
       GoRoute(path: '/variant',     builder: (c, s) => const ErrorBoundary(moduleName: 'Variant Analysis', child: VariantScreen())),
       GoRoute(path: '/expression',  builder: (c, s) => const ErrorBoundary(moduleName: 'Expression Analysis', child: ExpressionScreen())),
       GoRoute(path: '/pathway',     builder: (c, s) => const ErrorBoundary(moduleName: 'Pathway Enrichment', child: PathwayScreen())),

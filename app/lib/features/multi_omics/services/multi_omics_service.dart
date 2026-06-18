@@ -17,7 +17,7 @@ class OmicsLayer {
 
   static List<OmicsLayer> allLayers() => const [
     OmicsLayer(name: 'Genomics', type: 'genomics', icon: '🧬', featureCount: 3,
-      summary: 'Genome sequence, variants, 3D organization'),
+      summary: 'Genome sequence, variants, disease genetics'),
     OmicsLayer(name: 'Transcriptomics', type: 'transcriptomics', icon: '📊', featureCount: 2,
       summary: 'Gene expression, alternative splicing'),
     OmicsLayer(name: 'Proteomics', type: 'proteomics', icon: '🔬', featureCount: 2,
@@ -94,7 +94,7 @@ class MultiOmicsService {
 
   /// Get module routes for navigation
   static Map<String, String> moduleRoutes() => {
-    'Genome': '/genome', '3D Genome': '/genome_3d',
+    'Genome': '/genome', 'Disease Genetics': '/genome_3d',
     'Variant': '/variant', 'Expression': '/expression',
     'Pathway': '/pathway', 'Protein': '/protein',
     'Regulatory': '/regulatory', 'Population': '/population',

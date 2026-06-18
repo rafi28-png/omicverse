@@ -82,7 +82,7 @@ OmicVerse provides 16 analysis modules organized by omics layer:
 | Cancer Genomics | GDC, cBioPortal | Somatic mutation lookup, cancer study exploration |
 | Evolutionary Conservation | UCSC, Ensembl | Ortholog comparison, conservation scoring |
 | Alternative Splicing | SpliceAI | Splicing event analysis, isoform exploration |
-| 3D Genome | 4D Nucleome | TAD boundaries, chromatin loop visualization |
+| Disease Genetics | OMIM, DisGeNET | Mendelian disease entries, gene-disease association scores |
 | Multi-Omics Integration | All sources | Unified gene profile across all omics layers |
 | Collaboration | Supabase | Team project sharing (authenticated mode) |
 
@@ -105,19 +105,25 @@ OmicVerse is built with the following design principles:
 
 ## API Integration
 
-OmicVerse queries 15+ public bioinformatics REST APIs in real-time:
+OmicVerse queries 18+ public bioinformatics REST APIs in real-time:
 
 - **Ensembl REST** and **VEP** for gene lookup and variant effect prediction
 - **UniProt** for protein function and domain annotation
-- **AlphaFold** for predicted structure confidence (pLDDT scores)
-- **KEGG** for metabolic and signaling pathway data
-- **STRING-DB** for protein-protein interaction networks
+- **OMIM** for Mendelian disease entries and phenotype associations
+- **DisGeNET** for gene-disease association scores from literature
+- **GTEx Portal** for tissue-specific gene expression across 54 tissues
 - **gnomAD** (GraphQL) for population allele frequencies
+- **NCBI E-utilities** for dbSNP and ClinVar queries
+- **KEGG** for metabolic and signaling pathway data
 - **ChEMBL** for bioactive compound and drug data
+- **PGS Catalog** for polygenic risk scores
 - **GDC** and **cBioPortal** for cancer genomics
 - **JASPAR** and **ENCODE** for regulatory element data
+- **STRING-DB** for protein-protein interaction networks
+- **AlphaFold** for predicted structure confidence (pLDDT scores)
 
-All APIs are public and require no authentication keys.
+Most APIs are public and require no authentication. OMIM, DisGeNET, and NCBI use
+API keys for authenticated access (managed via environment variables).
 
 # Testing
 
