@@ -138,8 +138,10 @@ class CancerService {
           }
         }
 
-        // Calculate a realistic frequency based on mutation.hashCode
-        final freq = (mutation.hashCode.abs() % 100) / 10.0 + 0.1;
+        // Calculate frequency from occurrence count
+        final freq = occurrences.isNotEmpty
+          ? (occurrences.length / 10.0).clamp(0.1, 50.0)  // Normalize to percentage
+          : 0.5;
 
         mutations.add(CancerMutation(
           gene: gene,

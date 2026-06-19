@@ -9,6 +9,8 @@ authors:
 repository-code: "https://github.com/rafi28-png/omicverse"
 url: "https://rafi28-png.github.io/omicverse/"
 license: MIT
+version: "1.0.0"
+date-released: "2026-06-18"
 keywords:
   - bioinformatics
   - multi-omics

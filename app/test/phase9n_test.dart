@@ -65,6 +65,7 @@ void main() {
       final routes = MultiOmicsService.moduleRoutes();
       expect(routes.length, 16);
       expect(routes['Genome'], '/genome');
+      expect(routes['Disease Genetics'], '/genome_3d');
       expect(routes['Drug'], '/drug');
     });
 

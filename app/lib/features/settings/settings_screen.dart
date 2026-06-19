@@ -91,10 +91,10 @@ class SettingsScreen extends ConsumerWidget {
                       const Divider(color: kBorder, height: 1, indent: 56),
                       _SettingsTile(
                         icon: Icons.science_outlined,
-                        title: 'Demo Mode',
+                        title: 'Guest Mode',
                         subtitle: isDemoMode
-                            ? 'ON — using mock offline data'
-                            : 'OFF — using live APIs (logged in)',
+                            ? 'ON — browsing as guest (no account features)'
+                            : 'OFF — logged in with full features',
                         trailing: Switch(
                           value: isDemoMode,
                           onChanged: (wantsLiveMode) {
