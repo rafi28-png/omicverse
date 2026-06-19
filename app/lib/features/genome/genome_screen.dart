@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 import '../../core/widgets/glow_card.dart';
@@ -79,7 +80,10 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
   }
 
   Future<void> _fetchSequence(GeneInfo gene) async {
-    setState(() => _loadingSequence = true);
+    setState(() {
+      _loadingSequence = true;
+      _sequence = null;
+    });
     // Limit to 10kb for display
     final seqEnd = gene.start + (gene.length > 10000 ? 10000 : gene.length);
     final seq = await GenomeService.fetchSequence(
@@ -89,6 +93,9 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
       setState(() {
         _sequence = seq;
         _loadingSequence = false;
+        if (seq == null) {
+          _error = 'Could not fetch sequence. The region may be too large or the API is unavailable.';
+        }
       });
     }
   }
@@ -204,7 +211,16 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
               selectedColor: kNeonTeal,
               backgroundColor: kSurface,
               side: BorderSide(color: selected ? kNeonTeal : kBorder),
-              onSelected: (_) => setState(() => _selectedGenome = g),
+              onSelected: (_) => setState(() {
+                _selectedGenome = g;
+                // Clear stale results from previous assembly
+                if (_state == _ScreenState.results || _state == _ScreenState.detail) {
+                  _results = [];
+                  _selectedGene = null;
+                  _sequence = null;
+                  _state = _ScreenState.idle;
+                }
+              }),
             ),
           );
         }),
@@ -243,7 +259,22 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          Text('Try: TP53, BRCA1, EGFR, BRAF, KRAS', style: tsMono().copyWith(fontSize: 11)),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            alignment: WrapAlignment.center,
+            children: ['TP53', 'BRCA1', 'EGFR', 'BRAF', 'KRAS'].map((g) =>
+              ActionChip(
+                label: Text(g, style: tsMono().copyWith(fontSize: 11)),
+                backgroundColor: kSurface,
+                side: const BorderSide(color: kBorder),
+                onPressed: () {
+                  _searchCtrl.text = g;
+                  _search();
+                },
+              )
+            ).toList(),
+          ),
         ],
       ),
     );
@@ -292,7 +323,7 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(gene.symbol, style: tsTitle(kTextPrimary).copyWith(fontSize: 16)),
-                        Text(gene.description, style: tsBody().copyWith(fontSize: 12, color: kTextSecondary),
+                        Text(_cleanDescription(gene.description), style: tsBody().copyWith(fontSize: 12, color: kTextSecondary),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                         Text(gene.location, style: tsMono().copyWith(fontSize: 11)),
                       ],
@@ -337,7 +368,8 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
                 ],
               ),
               const SizedBox(height: 4),
-              Text(gene.description, style: tsBody().copyWith(color: kTextSecondary)),
+              Text(_cleanDescription(gene.description),
+                style: tsBody().copyWith(color: kTextSecondary)),
               const SizedBox(height: 12),
               Text(gene.ensemblId, style: tsMono()),
             ],
@@ -376,7 +408,10 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
               icon: Icons.open_in_new,
               color: kNeonGreen,
               onPressed: () {
-                // Opens Ensembl gene page
+                final base = _selectedGenome == 'GRCh37'
+                    ? 'https://grch37.ensembl.org'
+                    : 'https://ensembl.org';
+                launchUrl(Uri.parse('$base/Homo_sapiens/Gene/Summary?g=${gene.ensemblId}'));
               },
             ),
             NeonButton(
@@ -392,7 +427,7 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
         if (_loadingSequence) ...[
           const SizedBox(height: 16),
           const Center(child: DnaLoader(message: 'Fetching sequence...')),
-        ] else if (_sequence != null) ...[
+        ] else if (_sequence != null && _sequence!.isNotEmpty) ...[
           const SizedBox(height: 16),
           GlowCard(
             glowColor: kNeonBlue,
@@ -425,19 +460,30 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Row(
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 8,
                   children: [
                     _seqStat('GC Content', _gcContent(_sequence!)),
-                    const SizedBox(width: 16),
                     _seqStat('A', _baseCount(_sequence!, 'A')),
-                    const SizedBox(width: 16),
                     _seqStat('T', _baseCount(_sequence!, 'T')),
-                    const SizedBox(width: 16),
                     _seqStat('G', _baseCount(_sequence!, 'G')),
-                    const SizedBox(width: 16),
                     _seqStat('C', _baseCount(_sequence!, 'C')),
                   ],
                 ),
+              ],
+            ),
+          ),
+        ] else if (!_loadingSequence && _sequence != null && _sequence!.isEmpty) ...[
+          const SizedBox(height: 16),
+          GlowCard(
+            glowColor: kNeonAmber,
+            child: Row(
+              children: [
+                const Icon(Icons.warning_amber, color: kNeonAmber, size: 20),
+                const SizedBox(width: 12),
+                Text('No sequence data returned for this region.',
+                  style: tsBody().copyWith(color: kNeonAmber)),
               ],
             ),
           ),
@@ -492,8 +538,14 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
   }
 
   String _baseCount(String seq, String base) {
+    if (seq.isEmpty) return '0 (0.0%)';
     final count = seq.toUpperCase().split('').where((c) => c == base).length;
     return '$count (${(count / seq.length * 100).toStringAsFixed(1)}%)';
+  }
+
+  String _cleanDescription(String desc) {
+    // Remove Ensembl source annotation suffix like [Source:HGNC Symbol;Acc:HGNC:11998]
+    return desc.replaceAll(RegExp(r'\s*\[Source:.*?\]'), '').trim();
   }
 
   Widget _seqStat(String label, String value) {
