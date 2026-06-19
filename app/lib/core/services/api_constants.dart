@@ -7,7 +7,7 @@ class ApiConstants {
   static const kegg        = 'https://rest.kegg.jp';
   static const stringDb    = 'https://string-db.org/api/json';
   static const quickgo     = 'https://www.ebi.ac.uk/QuickGO/services';
-  static const gtex        = 'https://gtexportal.org/rest/v1';
+  static const gtex        = 'https://gtexportal.org/api/v2';
   static const dgidb       = 'https://dgidb.org/api/v2';
   static const chembl      = 'https://www.ebi.ac.uk/chembl/api/data';
   static const clinTrials  = 'https://clinicaltrials.gov/api/v2';
@@ -56,8 +56,11 @@ class ApiConstants {
       query Variant(\$variantId: String!) {
         variant(variantId: \$variantId, dataset: gnomad_r4) {
           variantId chrom pos ref alt
-          exome { ac { ac an } }
-          genome { ac { ac an } }
+          genome {
+            ac
+            an
+            af
+          }
         }
       }
     ''',

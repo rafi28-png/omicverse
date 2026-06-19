@@ -138,7 +138,7 @@ class GtexService {
 
       // Cache the actual data
       try {
-        final cacheData = results.map((r) => {
+        final cacheData = results.map((r) => <String, dynamic>{
           'tissue': r.tissue, 'id': r.tissueSiteDetailId,
           'tpm': r.medianTpm, 'gene': r.geneSymbol,
         }).toList();

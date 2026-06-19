@@ -92,7 +92,7 @@ class CancerService {
           {
             'op': 'in',
             'content': {
-              'field': 'genes.symbol',
+              'field': 'ssms.consequence.transcript.gene.symbol',
               'value': [gene]
             }
           }
@@ -103,7 +103,7 @@ class CancerService {
         '$_gdcBase/ssms',
         params: {
           'filters': jsonEncode(filters),
-          'fields': 'genomic_dna_change,mutation_subtype,consequence.vep.consequence_term,occurrence.case.project.project_id',
+          'fields': 'genomic_dna_change,mutation_subtype,consequence.transcript.consequence_type,occurrence.case.project.project_id',
           'size': '25',
           'format': 'json',
         },
@@ -121,9 +121,8 @@ class CancerService {
         final consList = item['consequence'] as List<dynamic>? ?? [];
         if (consList.isNotEmpty) {
           final transcript = consList[0]['transcript'] as Map<String, dynamic>?;
-          final vep = transcript?['consequence_type'] as String? ?? 
-                      consList[0]['vep']?['consequence_term'] as String? ?? 'Missense';
-          consequence = vep.replaceAll('_', ' ');
+          final consType = transcript?['consequence_type'] as String? ?? 'Missense';
+          consequence = consType.replaceAll('_', ' ');
         } else {
           consequence = (item['mutation_subtype'] as String? ?? 'Missense').replaceAll('_', ' ');
         }
@@ -149,7 +148,7 @@ class CancerService {
           cancerType: cancerType,
           frequency: freq,
           consequence: consequence,
-          clinicalSignificance: freq > 5.0 ? 'Pathogenic' : 'VUS',
+          clinicalSignificance: 'See ClinVar',
         ));
       }
 

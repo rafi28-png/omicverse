@@ -110,7 +110,7 @@ class RegulatoryService {
       };
 
       final resp = await ApiService.post(
-        'https://factorbook.api.wenglab.org/graphql',
+        'https://screen.api.wenglab.org/graphql',
         {'query': query, 'variables': vars},
       );
 
@@ -178,7 +178,7 @@ class RegulatoryService {
       return results.map((item) => TranscriptionFactor(
         name: item['name'] as String? ?? '',
         target: gene,
-        score: ((item['version'] as num?)?.toDouble() ?? 1.0) / 3.0 + 0.6,
+        score: 0.0,
         cellType: (item['collection'] as String?) ?? 'CORE',
       )).toList();
     } catch (_) {

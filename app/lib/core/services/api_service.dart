@@ -41,6 +41,7 @@ class ApiService {
     'clinicaltrials.gov',
     'api.omim.org',
     'www.disgenet.org',
+    'screen.api.wenglab.org',
   ];
 
   static String _proxiedUrl(String url) {

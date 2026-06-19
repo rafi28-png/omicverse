@@ -30,13 +30,13 @@ class ConservationScore {
   final String chromosome;
   final int position;
   final double phyloP;
-  final double phastCons;
+  final double? phastCons;
 
   const ConservationScore({
     required this.chromosome,
     required this.position,
     required this.phyloP,
-    required this.phastCons,
+    this.phastCons,
   });
 
   String get constraintLabel {
@@ -115,7 +115,7 @@ class EvolutionService {
           chromosome: chr,
           position: pos,
           phyloP: value,
-          phastCons: value > 0 ? (value / 10.0).clamp(0.0, 1.0) : 0.0,
+          phastCons: null, // Only phyloP available from this track
         ));
       }
 

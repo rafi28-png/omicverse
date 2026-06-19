@@ -134,12 +134,12 @@ class DrugService {
 
           results.add(Drug(
             chemblId: molId,
-            name: molResp['pref_name'] as String? ?? molId,
+            name: (molResp['pref_name'] as String?) ?? molId,
             type: molResp['molecule_type'] as String? ?? 'Unknown',
-            maxPhase: molResp['max_phase'] as int? ?? 0,
+            maxPhase: (molResp['max_phase'] as num?)?.toInt() ?? 0,
             mechanism: mechanism,
             targetGene: gene,
-            isApproved: (molResp['max_phase'] as int? ?? 0) >= 4,
+            isApproved: ((molResp['max_phase'] as num?)?.toInt() ?? 0) >= 4,
           ));
         } catch (_) {
           // If molecule fetch fails, still add with mechanism data
@@ -173,10 +173,10 @@ class DrugService {
       final results = resp['molecules'] as List<dynamic>? ?? [];
       return results.map((m) => Drug(
         chemblId: m['molecule_chembl_id'] as String? ?? '',
-        name: m['pref_name'] as String? ?? '',
+        name: (m['pref_name'] as String?) ?? (m['molecule_chembl_id'] as String? ?? ''),
         type: m['molecule_type'] as String? ?? 'Unknown',
-        maxPhase: m['max_phase'] as int? ?? 0,
-        isApproved: (m['max_phase'] as int? ?? 0) >= 4,
+        maxPhase: (m['max_phase'] as num?)?.toInt() ?? 0,
+        isApproved: ((m['max_phase'] as num?)?.toInt() ?? 0) >= 4,
       )).toList();
     } catch (_) {
       return Drug.demoDrugs().where((d) =>

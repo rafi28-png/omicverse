@@ -106,7 +106,7 @@ class SplicingService {
       final events = <SplicingEvent>[];
 
       for (final iso in isoforms.where((i) => i.transcriptId != canonical.transcriptId)) {
-        if (iso.exonCount < canonical.exonCount) {
+        if (iso.exonCount < canonical.exonCount && canonical.exonCount > 0) {
           events.add(SplicingEvent(
             gene: gene,
             type: 'SE',
@@ -114,7 +114,7 @@ class SplicingService {
             inclusionLevel: iso.exonCount / canonical.exonCount,
             tissue: iso.biotype,
           ));
-        } else if (iso.exonCount > canonical.exonCount) {
+        } else if (iso.exonCount > canonical.exonCount && iso.exonCount > 0) {
           events.add(SplicingEvent(
             gene: gene,
             type: 'RI',
@@ -122,7 +122,7 @@ class SplicingService {
             inclusionLevel: canonical.exonCount / iso.exonCount,
             tissue: iso.biotype,
           ));
-        } else if (iso.length != canonical.length) {
+        } else if (iso.length != canonical.length && canonical.length > 0) {
           events.add(SplicingEvent(
             gene: gene,
             type: iso.length > canonical.length ? 'A5SS' : 'A3SS',

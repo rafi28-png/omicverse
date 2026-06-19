@@ -98,27 +98,70 @@ class PathwayService {
   /// Search pathways for a specific gene
   static Future<List<PathwayInfo>> pathwaysForGene(String gene) async {
     try {
+      // Step 1: Resolve gene to KEGG ID (e.g., TP53 → hsa:7157)
       await RateLimiter.throttle('kegg');
-      final resp = await ApiService.getRaw(
-        '$_keggBase/find/pathway/$gene',
+      final geneResp = await ApiService.getRaw(
+        '$_keggBase/find/genes/$gene+homo+sapiens',
       );
 
-      final results = <PathwayInfo>[];
+      String? keggGeneId;
+      for (final line in geneResp.split('\n')) {
+        if (line.trim().isEmpty) continue;
+        final parts = line.split('\t');
+        if (parts.isNotEmpty && parts[0].startsWith('hsa:')) {
+          keggGeneId = parts[0].trim();
+          break;
+        }
+      }
+
+      if (keggGeneId == null) {
+        // Fallback: try direct link with common KEGG ID format
+        keggGeneId = 'hsa:$gene';
+      }
+
+      // Step 2: Get pathways containing this gene
+      await RateLimiter.throttle('kegg');
+      final resp = await ApiService.getRaw(
+        '$_keggBase/link/pathway/$keggGeneId',
+      );
+
+      // link/pathway response format: hsa:7157\tpath:hsa05200
+      final pathwayIds = <String>[];
       for (final line in resp.split('\n')) {
         if (line.trim().isEmpty) continue;
         final parts = line.split('\t');
         if (parts.length < 2) continue;
-        final id = parts[0].trim().replaceAll('path:', '');
-        final name = parts[1].trim().split(' - ')[0];
-        if (id.startsWith('hsa') || id.startsWith('map')) {
-          results.add(PathwayInfo(
-            id: id.startsWith('hsa') ? id : 'hsa${id.substring(3)}',
-            name: name,
-            description: name,
-          ));
+        final pathId = parts[1].trim().replaceAll('path:', '');
+        if (pathId.startsWith('hsa')) {
+          pathwayIds.add(pathId);
         }
       }
-      return results.take(15).toList();
+
+      if (pathwayIds.isEmpty) {
+        return PathwayInfo.demoPathways().where((p) =>
+          p.genes.any((g) => g.toLowerCase() == gene.toLowerCase())
+        ).toList();
+      }
+
+      // Step 3: Get pathway names
+      final results = <PathwayInfo>[];
+      for (final pathId in pathwayIds.take(15)) {
+        try {
+          await RateLimiter.throttle('kegg');
+          final infoResp = await ApiService.getRaw('$_keggBase/get/$pathId');
+          final nameMatch = RegExp(r'NAME\s+(.+)').firstMatch(infoResp);
+          final descMatch = RegExp(r'DESCRIPTION\s+(.+)').firstMatch(infoResp);
+          results.add(PathwayInfo(
+            id: pathId,
+            name: nameMatch?.group(1)?.split(' - ')[0].trim() ?? pathId,
+            description: descMatch?.group(1)?.trim() ?? '',
+            genes: [gene],
+          ));
+        } catch (_) {
+          results.add(PathwayInfo(id: pathId, name: pathId, description: '', genes: [gene]));
+        }
+      }
+      return results;
     } catch (_) {
       return PathwayInfo.demoPathways().where((p) =>
         p.genes.any((g) => g.toLowerCase() == gene.toLowerCase())

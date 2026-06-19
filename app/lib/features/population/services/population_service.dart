@@ -191,7 +191,7 @@ class PopulationService {
               homozygote_count
             }
           }
-          transcript_consequences {
+          sortedTranscriptConsequences {
             major_consequence
             gene_symbol
           }
@@ -215,14 +215,14 @@ class PopulationService {
             population: _popName(id),
             abbreviation: id.toUpperCase(),
             alleleFrequency: (p['af'] as num?)?.toDouble() ?? 0,
-            alleleCount: p['ac'] as int? ?? 0,
-            alleleNumber: p['an'] as int? ?? 0,
-            homozygoteCount: p['homozygote_count'] as int? ?? 0,
+            alleleCount: (p['ac'] as num?)?.toInt() ?? 0,
+            alleleNumber: (p['an'] as num?)?.toInt() ?? 0,
+            homozygoteCount: (p['homozygote_count'] as num?)?.toInt() ?? 0,
           ));
         }
       }
 
-      final consequences = data['transcript_consequences'] as List<dynamic>? ?? [];
+      final consequences = data['sortedTranscriptConsequences'] as List<dynamic>? ?? [];
       final consequence = consequences.isNotEmpty
         ? consequences[0]['major_consequence'] as String? : null;
       final gene = consequences.isNotEmpty

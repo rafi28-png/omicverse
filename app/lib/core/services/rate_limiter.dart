@@ -22,8 +22,13 @@ class RateLimiter {
     'chembl':         const _Lim(10, Duration(seconds: 1)),
     'ucsc':           const _Lim(5,  Duration(seconds: 1)),
     'pgs':            const _Lim(10, Duration(seconds: 1)),
+    'pgscatalog':     const _Lim(10, Duration(seconds: 1)),
     'gdc':            const _Lim(10, Duration(seconds: 1)),
     'alphafold':      const _Lim(5,  Duration(seconds: 1)),
+    'omim':           const _Lim(4,  Duration(seconds: 1)),
+    'disgenet':       const _Lim(5,  Duration(seconds: 1)),
+    'encode':         const _Lim(5,  Duration(seconds: 1)),
+    'jaspar':         const _Lim(10, Duration(seconds: 1)),
     'default':        const _Lim(5,  Duration(seconds: 1)),
   };
 

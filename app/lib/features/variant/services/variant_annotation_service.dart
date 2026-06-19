@@ -81,11 +81,20 @@ class VariantAnnotationService {
 
         final data = resp['data']?['variant'];
         if (data != null) {
-          final genomeAc = data['genome']?['ac']?['ac'] as int? ?? 0;
-          final genomeAn = data['genome']?['ac']?['an'] as int? ?? 0;
-          if (genomeAn > 0) {
-            freq = genomeAc / genomeAn;
-            await CacheService.set('gnomad', variantId, freq.toString());
+          final genome = data['genome'] as Map<String, dynamic>?;
+          if (genome != null) {
+            // Use af directly if available, otherwise compute from ac/an
+            final af = genome['af'] as num?;
+            if (af != null) {
+              freq = af.toDouble();
+            } else {
+              final ac = genome['ac'] as int? ?? 0;
+              final an = genome['an'] as int? ?? 0;
+              if (an > 0) freq = ac / an;
+            }
+            if (freq != null) {
+              await CacheService.set('gnomad', variantId, freq.toString());
+            }
           }
         }
       }
@@ -97,7 +106,13 @@ class VariantAnnotationService {
     try {
       final vepId = '${v.chromosome}:${v.position}:${v.ref}/${v.alt}';
       final cached = await CacheService.get('ensembl', 'vep:$vepId');
-      if (cached == null) {
+      if (cached != null) {
+        final parts = cached.split('|');
+        if (parts.length == 2) {
+          gene = parts[0].isEmpty ? null : parts[0];
+          consequence = parts[1].isEmpty ? null : parts[1];
+        }
+      } else {
         await RateLimiter.throttle('ensembl');
         final resp = await ApiService.get<List<dynamic>>(
           '${ApiConstants.ensembl}/vep/human/region/$vepId',
@@ -112,7 +127,8 @@ class VariantAnnotationService {
               consequence = (terms[0] as String).replaceAll('_', ' ');
             }
           }
-          await CacheService.set('ensembl', 'vep:$vepId', 'done',
+          await CacheService.set('ensembl', 'vep:$vepId',
+            '${gene ?? ''}|${consequence ?? ''}',
             ttl: const Duration(hours: 24));
         }
       }
@@ -128,7 +144,7 @@ class VariantAnnotationService {
     return AnnotatedVariant(
       variant: v,
       gnomadFrequency: freq,
-      clinvarSignificance: clinSig ?? 'Uncertain significance',
+      clinvarSignificance: clinSig ?? 'Not queried',
       clinvarCondition: clinCond,
       gene: gene,
       consequence: consequence,
@@ -136,31 +152,31 @@ class VariantAnnotationService {
   }
 
   static AnnotatedVariant _mockAnnotation(VcfVariant v, String key) {
-    if (key == '17:7673802 A>G') {
+    if (key == '17:7673802:A>G') {
       return AnnotatedVariant(
         variant: v, gnomadFrequency: 0.0002, gene: 'TP53', consequence: 'missense variant',
         clinvarSignificance: 'Pathogenic', clinvarCondition: 'Li-Fraumeni syndrome 1',
       );
     }
-    if (key == '17:7674220 C>T') {
+    if (key == '17:7674220:C>T') {
       return AnnotatedVariant(
         variant: v, gnomadFrequency: 0.0053, gene: 'TP53', consequence: 'synonymous variant',
         clinvarSignificance: 'Benign', clinvarCondition: 'Neoplasm of the breast',
       );
     }
-    if (key == '13:32315474 T>G') {
+    if (key == '13:32315474:T>G') {
       return AnnotatedVariant(
         variant: v, gnomadFrequency: 0.00001, gene: 'BRCA2', consequence: 'frameshift variant',
         clinvarSignificance: 'Pathogenic', clinvarCondition: 'Hereditary breast and ovarian cancer syndrome',
       );
     }
-    if (key == '7:55181378 G>A') {
+    if (key == '7:55181378:G>A') {
       return AnnotatedVariant(
         variant: v, gnomadFrequency: 0.00012, gene: 'EGFR', consequence: 'missense variant',
         clinvarSignificance: 'Likely pathogenic', clinvarCondition: 'Lung cancer susceptibility',
       );
     }
-    if (key == '1:43350284 C>T') {
+    if (key == '1:43350284:C>T') {
       return AnnotatedVariant(
         variant: v, gnomadFrequency: 0.342, gene: 'MTHFR', consequence: 'missense variant',
         clinvarSignificance: 'Benign', clinvarCondition: 'Schizophrenia susceptibility',

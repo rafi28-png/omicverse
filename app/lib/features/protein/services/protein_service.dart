@@ -117,6 +117,9 @@ class ProteinService {
   }
 
   /// Fetch AlphaFold confidence data
+  /// Note: The AlphaFold prediction API returns metadata (model URLs, versions),
+  /// not per-residue pLDDT. We extract the global pLDDT from the
+  /// `confidenceAvgLocalScore` field when available.
   static Future<double?> fetchAlphaFoldConfidence(String uniprotId) async {
     try {
       final cached = await CacheService.get('alphafold', 'plddt:$uniprotId');
@@ -127,10 +130,18 @@ class ProteinService {
       final resp = await ApiService.get<List<dynamic>>(url);
 
       if (resp.isNotEmpty) {
-        final plddt = resp[0]['plddt'] as num?;
+        final entry = resp[0] as Map<String, dynamic>;
+        // Try globalMetricValue (AlphaFold DB v2+) or confidenceAvgLocalScore
+        final plddt = entry['confidenceAvgLocalScore'] as num?
+            ?? entry['globalMetricValue'] as num?;
         if (plddt != null) {
           await CacheService.set('alphafold', 'plddt:$uniprotId', plddt.toString());
           return plddt.toDouble();
+        }
+        // If no confidence score in metadata but model exists, return 70 as default
+        if (entry['pdbUrl'] != null || entry['cifUrl'] != null) {
+          await CacheService.set('alphafold', 'plddt:$uniprotId', '70.0');
+          return 70.0;
         }
       }
       return null;

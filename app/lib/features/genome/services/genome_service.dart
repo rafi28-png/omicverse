@@ -48,9 +48,9 @@ class GeneInfo {
     symbol: j['symbol'] as String,
     description: j['description'] as String,
     chromosome: j['chromosome'] as String,
-    start: j['start'] as int,
-    end: j['end'] as int,
-    strand: j['strand'] as int,
+    start: (j['start'] as num).toInt(),
+    end: (j['end'] as num).toInt(),
+    strand: (j['strand'] as num).toInt(),
     biotype: j['biotype'] as String,
     assembly: j['assembly'] as String,
   );
@@ -153,7 +153,7 @@ class GenomeService {
     try {
       await RateLimiter.throttle('ensembl');
       final resp = await ApiService.get<Map<String, dynamic>>(
-        '${ApiConstants.ensembl}/sequence/region/human/$chromosome:$start..$end:1',
+        '${ApiConstants.ensembl}/sequence/region/homo_sapiens/$chromosome:$start..$end:1',
         params: {'content-type': 'application/json'},
       );
       return resp['seq'] as String?;

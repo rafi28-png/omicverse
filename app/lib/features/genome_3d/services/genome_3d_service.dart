@@ -152,8 +152,8 @@ class DiseaseGeneticsService {
       final results = resp.map((item) {
         final m = item as Map<String, dynamic>;
         return DiseaseAssociation(
-          diseaseName: m['disease_name'] as String? ?? 'Unknown',
-          diseaseId: m['diseaseid'] as String? ?? '',
+          diseaseName: m['disease_name'] as String? ?? m['diseaseName'] as String? ?? 'Unknown',
+          diseaseId: m['diseaseId'] as String? ?? m['diseaseid'] as String? ?? '',
           score: (m['score'] as num?)?.toDouble() ?? 0.0,
           source: 'DisGeNET',
           nPublications: (m['pmid_count'] as num?)?.toInt() ?? 0,
