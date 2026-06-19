@@ -90,11 +90,57 @@ class SplicingService {
     }
   }
 
-  /// Get splicing events for a gene (demo)
+  /// Derive splicing events from isoform comparison via Ensembl
   static Future<List<SplicingEvent>> getSplicingEvents(String gene) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    return SplicingEvent.demoEvents().where((e) =>
-      e.gene.toLowerCase() == gene.toLowerCase()).toList();
+    try {
+      // Fetch real isoforms first
+      final isoforms = await getIsoforms(gene);
+      if (isoforms.length < 2) {
+        return SplicingEvent.demoEvents().where((e) =>
+          e.gene.toLowerCase() == gene.toLowerCase()).toList();
+      }
+
+      // Compare canonical vs alternative isoforms to detect splicing events
+      final canonical = isoforms.firstWhere((i) => i.isCanonical,
+        orElse: () => isoforms.first);
+      final events = <SplicingEvent>[];
+
+      for (final iso in isoforms.where((i) => i.transcriptId != canonical.transcriptId)) {
+        if (iso.exonCount < canonical.exonCount) {
+          events.add(SplicingEvent(
+            gene: gene,
+            type: 'SE',
+            exon: 'Exon(s) in ${iso.transcriptId}',
+            inclusionLevel: iso.exonCount / canonical.exonCount,
+            tissue: iso.biotype,
+          ));
+        } else if (iso.exonCount > canonical.exonCount) {
+          events.add(SplicingEvent(
+            gene: gene,
+            type: 'RI',
+            exon: '${iso.exonCount - canonical.exonCount} extra exon(s)',
+            inclusionLevel: canonical.exonCount / iso.exonCount,
+            tissue: iso.biotype,
+          ));
+        } else if (iso.length != canonical.length) {
+          events.add(SplicingEvent(
+            gene: gene,
+            type: iso.length > canonical.length ? 'A5SS' : 'A3SS',
+            exon: '${iso.transcriptId} (${iso.length}bp vs ${canonical.length}bp)',
+            inclusionLevel: (iso.length / canonical.length).clamp(0.0, 1.0),
+            tissue: iso.biotype,
+          ));
+        }
+      }
+
+      return events.isEmpty
+        ? SplicingEvent.demoEvents().where((e) =>
+            e.gene.toLowerCase() == gene.toLowerCase()).toList()
+        : events;
+    } catch (_) {
+      return SplicingEvent.demoEvents().where((e) =>
+        e.gene.toLowerCase() == gene.toLowerCase()).toList();
+    }
   }
 
   /// Get event type distribution

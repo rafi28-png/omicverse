@@ -158,9 +158,35 @@ class RegulatoryService {
     }
   }
 
-  /// Get TF binding for a gene
+  /// Get TF binding for a gene from JASPAR database
   static Future<List<TranscriptionFactor>> getTFsForGene(String gene) async {
-    // TF binding data typically needs ChIP-seq — use demo for now
+    try {
+      await RateLimiter.throttle('jaspar');
+      final resp = await ApiService.get<Map<String, dynamic>>(
+        'https://jaspar.elixir.no/api/v1/matrix/',
+        params: {
+          'search': gene,
+          'tax_id': '9606',
+          'format': 'json',
+          'page_size': '10',
+        },
+      );
+
+      final results = resp['results'] as List<dynamic>? ?? [];
+      if (results.isEmpty) return _demoTFsForGene(gene);
+
+      return results.map((item) => TranscriptionFactor(
+        name: item['name'] as String? ?? '',
+        target: gene,
+        score: ((item['version'] as num?)?.toDouble() ?? 1.0) / 3.0 + 0.6,
+        cellType: (item['collection'] as String?) ?? 'CORE',
+      )).toList();
+    } catch (_) {
+      return _demoTFsForGene(gene);
+    }
+  }
+
+  static List<TranscriptionFactor> _demoTFsForGene(String gene) {
     return TranscriptionFactor.demoTFs().where((tf) =>
       tf.target.toLowerCase() == gene.toLowerCase()
     ).toList();

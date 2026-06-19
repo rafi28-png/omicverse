@@ -150,6 +150,6 @@ const _dataSources = [
   _DataSource('ENCODE / JASPAR', 'Regulatory elements and transcription factor binding profiles'),
   _DataSource('AlphaFold', 'AI-predicted 3D protein structures and confidence scores'),
   _DataSource('STRING', 'Protein-protein interaction networks'),
-  _DataSource('SpliceAI', 'Splice site prediction for alternative splicing analysis'),
+  _DataSource('Supabase', 'Real-time collaboration backend and user authentication'),
   _DataSource('UCSC', 'Conservation scores (phyloP, phastCons) across species'),
 ];

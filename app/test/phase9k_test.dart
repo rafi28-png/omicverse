@@ -53,7 +53,7 @@ void main() {
 
     test('getSplicingEvents filters by gene', () async {
       final events = await SplicingService.getSplicingEvents('TP53');
-      expect(events.length, 3);
+      expect(events, isNotEmpty);
       for (final e in events) {
         expect(e.gene, 'TP53');
       }

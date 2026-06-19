@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/rate_limiter.dart';
 import '../../../core/services/cache_service.dart';
@@ -94,6 +95,20 @@ class GtexService {
 
       // Step 2: Fetch median expression across tissues
       final cacheKey = 'expr:$gencodeId';
+
+      final cachedExpr = await CacheService.get('gtex', cacheKey);
+      if (cachedExpr != null) {
+        try {
+          final list = jsonDecode(cachedExpr) as List<dynamic>;
+          return list.map((item) => TissueExpression(
+            tissue: item['tissue'] as String,
+            tissueSiteDetailId: item['id'] as String,
+            medianTpm: (item['tpm'] as num).toDouble(),
+            geneSymbol: item['gene'] as String,
+          )).toList();
+        } catch (_) {}
+      }
+
       await RateLimiter.throttle('gtex');
       final resp = await ApiService.get<Map<String, dynamic>>(
         '$_base/expression/medianGeneExpression',
@@ -121,7 +136,16 @@ class GtexService {
       // Sort by expression level (highest first)
       results.sort((a, b) => b.medianTpm.compareTo(a.medianTpm));
 
-      await CacheService.set('gtex', cacheKey, 'cached');
+      // Cache the actual data
+      try {
+        final cacheData = results.map((r) => {
+          'tissue': r.tissue, 'id': r.tissueSiteDetailId,
+          'tpm': r.medianTpm, 'gene': r.geneSymbol,
+        }).toList();
+        await CacheService.set('gtex', cacheKey,
+          jsonEncode(cacheData),
+          ttl: const Duration(hours: 12));
+      } catch (_) {}
       return results;
     } catch (_) {
       return TissueExpression.demoData(geneSymbol);

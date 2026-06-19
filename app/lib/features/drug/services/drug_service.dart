@@ -90,7 +90,7 @@ class DrugService {
   static Future<List<Drug>> searchByTarget(String gene) async {
     if (gene.trim().isEmpty) return [];
     try {
-      // Step 1: Find the target ChEMBL ID from the gene component synonym component
+      // Step 1: Find the target ChEMBL ID
       await RateLimiter.throttle('chembl');
       final targetResp = await ApiService.get<Map<String, dynamic>>(
         '$_chemblBase/target.json',
@@ -112,15 +112,49 @@ class DrugService {
         params: {'target_chembl_id': targetChemblId, 'limit': '15'},
       );
 
-      final results = resp['mechanisms'] as List<dynamic>? ?? [];
-      return results.map((m) => Drug(
-        chemblId: m['molecule_chembl_id'] as String? ?? '',
-        name: m['molecule_name'] as String? ?? '',
-        type: m['molecule_type'] as String? ?? 'Unknown',
-        maxPhase: m['max_phase'] as int? ?? 0,
-        mechanism: m['mechanism_of_action'] as String? ?? '',
-        targetGene: gene,
-      )).toList();
+      final mechanisms = resp['mechanisms'] as List<dynamic>? ?? [];
+      if (mechanisms.isEmpty) return _demoForGene(gene);
+
+      // Step 3: Fetch molecule details for each unique molecule_chembl_id
+      final seen = <String>{};
+      final results = <Drug>[];
+
+      for (final m in mechanisms) {
+        final molId = m['molecule_chembl_id'] as String? ?? '';
+        if (molId.isEmpty || seen.contains(molId)) continue;
+        seen.add(molId);
+
+        final mechanism = m['mechanism_of_action'] as String? ?? '';
+
+        try {
+          await RateLimiter.throttle('chembl');
+          final molResp = await ApiService.get<Map<String, dynamic>>(
+            '$_chemblBase/molecule/$molId.json',
+          );
+
+          results.add(Drug(
+            chemblId: molId,
+            name: molResp['pref_name'] as String? ?? molId,
+            type: molResp['molecule_type'] as String? ?? 'Unknown',
+            maxPhase: molResp['max_phase'] as int? ?? 0,
+            mechanism: mechanism,
+            targetGene: gene,
+            isApproved: (molResp['max_phase'] as int? ?? 0) >= 4,
+          ));
+        } catch (_) {
+          // If molecule fetch fails, still add with mechanism data
+          results.add(Drug(
+            chemblId: molId,
+            name: molId,
+            type: 'Unknown',
+            maxPhase: 0,
+            mechanism: mechanism,
+            targetGene: gene,
+          ));
+        }
+      }
+
+      return results.isEmpty ? _demoForGene(gene) : results;
     } catch (_) {
       return _demoForGene(gene);
     }

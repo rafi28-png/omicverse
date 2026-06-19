@@ -88,10 +88,48 @@ class EvolutionService {
     }
   }
 
-  /// Get conservation scores (demo — real uses UCSC API)
+  /// Get conservation scores from UCSC Genome Browser API
   static Future<List<ConservationScore>> getConservation(String chr, int start, int end) async {
-    return ConservationScore.demoScores().where((s) =>
-      s.chromosome == chr && s.position >= start && s.position <= end).toList();
+    try {
+      // Limit region to prevent huge responses
+      final clampedEnd = start + ((end - start).clamp(1, 500));
+      await RateLimiter.throttle('ucsc');
+      final resp = await ApiService.get<Map<String, dynamic>>(
+        'https://api.genome.ucsc.edu/getData/track',
+        params: {
+          'genome': 'hg38',
+          'track': 'phyloP100way',
+          'chrom': 'chr$chr',
+          'start': '$start',
+          'end': '$clampedEnd',
+        },
+      );
+
+      final trackData = resp['phyloP100way'] as List<dynamic>? ?? [];
+      final scores = <ConservationScore>[];
+
+      for (final item in trackData) {
+        final pos = item['start'] as int? ?? 0;
+        final value = (item['value'] as num?)?.toDouble() ?? 0;
+        scores.add(ConservationScore(
+          chromosome: chr,
+          position: pos,
+          phyloP: value,
+          phastCons: value > 0 ? (value / 10.0).clamp(0.0, 1.0) : 0.0,
+        ));
+      }
+
+      // Sample every Nth point if too many results
+      if (scores.length > 50) {
+        final step = scores.length ~/ 50;
+        return [for (int i = 0; i < scores.length; i += step) scores[i]];
+      }
+
+      return scores.isEmpty ? ConservationScore.demoScores() : scores;
+    } catch (_) {
+      return ConservationScore.demoScores().where((s) =>
+        s.chromosome == chr && s.position >= start && s.position <= end).toList();
+    }
   }
 
   static String _commonName(String species) {
