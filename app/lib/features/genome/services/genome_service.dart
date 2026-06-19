@@ -72,10 +72,10 @@ class GeneInfo {
 
 class GenomeService {
   /// Search for a gene by symbol using Ensembl REST API
-  static Future<List<GeneInfo>> searchGene(String query) async {
+  static Future<List<GeneInfo>> searchGene(String query, {String assembly = 'GRCh38'}) async {
     if (query.trim().isEmpty) return [];
 
-    final cacheKey = 'gene_search:${query.toLowerCase()}';
+    final cacheKey = 'gene_search:${query.toLowerCase()}:$assembly';
     final cached = await CacheService.get('ensembl', cacheKey);
 
     if (cached != null) {
@@ -87,11 +87,15 @@ class GenomeService {
       }
     }
 
+    final baseUrl = assembly == 'GRCh37'
+        ? 'https://grch37.rest.ensembl.org'
+        : ApiConstants.ensembl;
+
     await RateLimiter.throttle('ensembl');
 
     try {
       final resp = await ApiService.get<List<dynamic>>(
-        '${ApiConstants.ensembl}/xrefs/symbol/homo_sapiens/$query',
+        '$baseUrl/xrefs/symbol/homo_sapiens/$query',
         params: {'content-type': 'application/json'},
       );
 
@@ -101,7 +105,7 @@ class GenomeService {
         if (id == null || !id.startsWith('ENSG')) continue;
 
         // Fetch full gene info
-        final gene = await _fetchGeneById(id);
+        final gene = await _fetchGeneById(id, baseUrl: baseUrl);
         if (gene != null) results.add(gene);
       }
 
@@ -124,11 +128,12 @@ class GenomeService {
   }
 
   /// Fetch gene info by Ensembl ID
-  static Future<GeneInfo?> _fetchGeneById(String ensemblId) async {
+  static Future<GeneInfo?> _fetchGeneById(String ensemblId, {String? baseUrl}) async {
     try {
+      final base = baseUrl ?? ApiConstants.ensembl;
       await RateLimiter.throttle('ensembl');
       final resp = await ApiService.get<Map<String, dynamic>>(
-        '${ApiConstants.ensembl}/lookup/id/$ensemblId',
+        '$base/lookup/id/$ensemblId',
         params: {'content-type': 'application/json', 'expand': '0'},
       );
 
@@ -137,9 +142,9 @@ class GenomeService {
         symbol: resp['display_name'] as String? ?? '',
         description: resp['description'] as String? ?? '',
         chromosome: resp['seq_region_name'] as String? ?? '',
-        start: resp['start'] as int? ?? 0,
-        end: resp['end'] as int? ?? 0,
-        strand: resp['strand'] as int? ?? 1,
+        start: (resp['start'] as num?)?.toInt() ?? 0,
+        end: (resp['end'] as num?)?.toInt() ?? 0,
+        strand: (resp['strand'] as num?)?.toInt() ?? 1,
         biotype: resp['biotype'] as String? ?? '',
         assembly: resp['assembly_name'] as String? ?? 'GRCh38',
       );
@@ -149,11 +154,15 @@ class GenomeService {
   }
 
   /// Fetch genomic sequence for a region
-  static Future<String?> fetchSequence(String chromosome, int start, int end) async {
+  static Future<String?> fetchSequence(String chromosome, int start, int end,
+      {String assembly = 'GRCh38'}) async {
     try {
+      final baseUrl = assembly == 'GRCh37'
+          ? 'https://grch37.rest.ensembl.org'
+          : ApiConstants.ensembl;
       await RateLimiter.throttle('ensembl');
       final resp = await ApiService.get<Map<String, dynamic>>(
-        '${ApiConstants.ensembl}/sequence/region/homo_sapiens/$chromosome:$start..$end:1',
+        '$baseUrl/sequence/region/homo_sapiens/$chromosome:$start..$end:1',
         params: {'content-type': 'application/json'},
       );
       return resp['seq'] as String?;

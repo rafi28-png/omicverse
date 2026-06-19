@@ -26,6 +26,8 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
   String? _error;
   List<GeneInfo> _results = [];
   GeneInfo? _selectedGene;
+  String? _sequence;
+  bool _loadingSequence = false;
   final _searchCtrl = TextEditingController();
   String _selectedGenome = 'GRCh38';
 
@@ -43,11 +45,12 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
 
     try {
       List<GeneInfo> results;
-      results = await GenomeService.searchGene(q);
+      results = await GenomeService.searchGene(q, assembly: _selectedGenome);
 
       setState(() {
         _results = results;
-        _state = results.isEmpty ? _ScreenState.idle : _ScreenState.results;
+        _state = results.isEmpty ? _ScreenState.error : _ScreenState.results;
+        if (results.isEmpty) _error = 'No genes found for "$q"';
       });
     } catch (e) {
       setState(() {
@@ -69,8 +72,25 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
       _state = _ScreenState.idle;
       _results = [];
       _selectedGene = null;
+      _sequence = null;
+      _loadingSequence = false;
       _error = null;
     });
+  }
+
+  Future<void> _fetchSequence(GeneInfo gene) async {
+    setState(() => _loadingSequence = true);
+    // Limit to 10kb for display
+    final seqEnd = gene.start + (gene.length > 10000 ? 10000 : gene.length);
+    final seq = await GenomeService.fetchSequence(
+      gene.chromosome, gene.start, seqEnd, assembly: _selectedGenome,
+    );
+    if (mounted) {
+      setState(() {
+        _sequence = seq;
+        _loadingSequence = false;
+      });
+    }
   }
 
   @override
@@ -346,6 +366,20 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
           runSpacing: 8,
           children: [
             NeonButton(
+              label: _loadingSequence ? 'Loading...' : (_sequence != null ? 'Reload Sequence' : 'Fetch Sequence'),
+              icon: Icons.code,
+              color: kNeonBlue,
+              onPressed: _loadingSequence ? null : () => _fetchSequence(gene),
+            ),
+            NeonButton(
+              label: 'View in Ensembl',
+              icon: Icons.open_in_new,
+              color: kNeonGreen,
+              onPressed: () {
+                // Opens Ensembl gene page
+              },
+            ),
+            NeonButton(
               label: 'New Search',
               icon: Icons.search,
               color: kNeonTeal,
@@ -353,6 +387,61 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
             ),
           ],
         ),
+
+        // Sequence viewer
+        if (_loadingSequence) ...[
+          const SizedBox(height: 16),
+          const Center(child: DnaLoader(message: 'Fetching sequence...')),
+        ] else if (_sequence != null) ...[
+          const SizedBox(height: 16),
+          GlowCard(
+            glowColor: kNeonBlue,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text('Genomic Sequence', style: tsSubtitle()),
+                    const Spacer(),
+                    Text(
+                      '${_sequence!.length} bp${gene.length > 10000 ? ' (first 10kb)' : ''}',
+                      style: tsMono().copyWith(fontSize: 11, color: kTextMuted),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: kVoid,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: kBorder),
+                  ),
+                  child: SelectableText(
+                    _formatSequence(_sequence!),
+                    style: tsMono().copyWith(fontSize: 11, letterSpacing: 1.5, height: 1.6),
+                    maxLines: 20,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _seqStat('GC Content', _gcContent(_sequence!)),
+                    const SizedBox(width: 16),
+                    _seqStat('A', _baseCount(_sequence!, 'A')),
+                    const SizedBox(width: 16),
+                    _seqStat('T', _baseCount(_sequence!, 'T')),
+                    const SizedBox(width: 16),
+                    _seqStat('G', _baseCount(_sequence!, 'G')),
+                    const SizedBox(width: 16),
+                    _seqStat('C', _baseCount(_sequence!, 'C')),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -383,6 +472,37 @@ class _GenomeScreenState extends ConsumerState<GenomeScreen> {
           Text(label, style: tsLabel()),
         ],
       ),
+    );
+  }
+
+  String _formatSequence(String seq) {
+    final buf = StringBuffer();
+    for (int i = 0; i < seq.length; i += 60) {
+      final end = (i + 60) > seq.length ? seq.length : i + 60;
+      buf.writeln(seq.substring(i, end));
+    }
+    return buf.toString().trimRight();
+  }
+
+  String _gcContent(String seq) {
+    if (seq.isEmpty) return '0%';
+    final upper = seq.toUpperCase();
+    final gc = upper.split('').where((c) => c == 'G' || c == 'C').length;
+    return '${(gc / upper.length * 100).toStringAsFixed(1)}%';
+  }
+
+  String _baseCount(String seq, String base) {
+    final count = seq.toUpperCase().split('').where((c) => c == base).length;
+    return '$count (${(count / seq.length * 100).toStringAsFixed(1)}%)';
+  }
+
+  Widget _seqStat(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: tsBadge().copyWith(color: kTextMuted)),
+        Text(value, style: tsMono().copyWith(fontSize: 11)),
+      ],
     );
   }
 }
